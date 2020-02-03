@@ -4,46 +4,54 @@
  * All contents cannot be copied without permission.
  */
 (async () => {
-const IMG_PATH = 'https://it-crafts.github.io/lesson/img';
-const fetchApiData = async function(url, page = 'info') {
+  const IMG_PATH = "https://it-crafts.github.io/lesson/img";
+  const fetchApiData = async function(url, page = "info") {
     const res = await fetch(url + page);
     const data = await res.json();
     return data.data;
-}
+  };
 
-const main = document.querySelector('main');
+  const main = document.querySelector("main");
 
-main.innerHTML = `
+  main.innerHTML = `
     <div class="v9tJq">
     </div>
 `;
-let page = main.firstElementChild;
-const url = 'https://my-json-server.typicode.com/it-crafts/lesson/timeline/';
+  let page = main.firstElementChild;
+  const url = "https://my-json-server.typicode.com/it-crafts/lesson/timeline/";
 
-const infoData = await fetchApiData(url);
-const totalPage = infoData.totalPage * 1;
-const profileData = infoData.profile;
-const scaleDown = numstring => {
-    const num = numstring.replace(/,/g, '');
-    if(num >= 1000000) {
-        return Math.floor(num / 100000) / 10 + '백만'
+  const infoData = await fetchApiData(url);
+  const totalPage = infoData.totalPage * 1;
+  const profileData = infoData.profile;
+  const scaleDown = numstring => {
+    const num = numstring.replace(/,/g, "");
+    if (num >= 1000000) {
+      return Math.floor(num / 100000) / 10 + "백만";
     }
-    if(num >= 1000) {
-        return Math.floor(num / 100) / 10 + '천'
+    if (num >= 1000) {
+      return Math.floor(num / 100) / 10 + "천";
     }
     return num;
-};
-page.insertAdjacentHTML('afterbegin', `
+  };
+  page.insertAdjacentHTML(
+    "afterbegin",
+    `
     <header class="HVbuG">
         <div class="XjzKX">
             <div class="RR-M- h5uC0" role="button" tabindex="0">
                 <canvas class="CfWVH" height="91" width="91" style="position: absolute; top: -7px; left: -7px; width: 91px; height: 91px;"></canvas>
-                <span class="_2dbep" role="link" tabindex="0" style="width: 77px; height: 77px;"><img alt="${profileData.name}님의 프로필 사진" class="_6q-tv" src="${IMG_PATH}${profileData.img}"></span>
+                <span class="_2dbep" role="link" tabindex="0" style="width: 77px; height: 77px;"><img alt="${
+                  profileData.name
+                }님의 프로필 사진" class="_6q-tv" src="${IMG_PATH}${
+      profileData.img
+    }"></span>
             </div>
         </div>
         <section class="zwlfE">
             <div class="nZSzR">
-                <h1 class="_7UhW9 fKFbl yUEEX KV-D4 fDxYl">${profileData.name}</h1>
+                <h1 class="_7UhW9 fKFbl yUEEX KV-D4 fDxYl">${
+                  profileData.name
+                }</h1>
                 <span class="mrEK_ Szr5J coreSpriteVerifiedBadge" title="인증됨">인증됨</span>
                 <div class="AFWDX"><button class="dCJp8 afkep"><span aria-label="옵션" class="glyphsSpriteMore_horizontal__outline__24__grey_9 u-__7"></span></button></div>
             </div>
@@ -58,20 +66,31 @@ page.insertAdjacentHTML('afterbegin', `
         </section>
     </header>
     <div class="-vDIg">
-        <h1 class="rhpdm">${profileData.title}</h1><br><span>${profileData.text}</span>
+        <h1 class="rhpdm">${profileData.title}</h1><br><span>${
+      profileData.text
+    }</span>
     </div>
     <ul class="_3dEHb">
-        <li class="LH36I"><span class="_81NM2">게시물 <span class="g47SY lOXF2">${profileData.post}</span></span></li>
-        <li class="LH36I"><a class="_81NM2" href="javascript:;">팔로워 <span class="g47SY lOXF2" title="${profileData.follower}">${scaleDown(profileData.follower)}</span></a></li>
-        <li class="LH36I"><a class="_81NM2" href="javascript:;">팔로우 <span class="g47SY lOXF2">${profileData.follow}</span></a></li>
+        <li class="LH36I"><span class="_81NM2">게시물 <span class="g47SY lOXF2">${
+          profileData.post
+        }</span></span></li>
+        <li class="LH36I"><a class="_81NM2" href="javascript:;">팔로워 <span class="g47SY lOXF2" title="${
+          profileData.follower
+        }">${scaleDown(profileData.follower)}</span></a></li>
+        <li class="LH36I"><a class="_81NM2" href="javascript:;">팔로우 <span class="g47SY lOXF2">${
+          profileData.follow
+        }</span></a></li>
     </ul>
     <div class="fx7hk">
         <a class="_9VEo1 T-jvg" href="javascript:;" data-type="grid"><span aria-label="게시물" class="glyphsSpritePhoto_grid__outline__24__blue_5 u-__7"></span></a>
         <a class="_9VEo1" href="javascript:;" data-type="feed"><span aria-label="피드" class="glyphsSpritePhoto_list__outline__24__grey_5 u-__7"></span></a>
         <a class="_9VEo1" href="javascript:;" data-type=""><span aria-label="태그됨" class="glyphsSpriteTag_up__outline__24__grey_5 u-__7"></span></a>
     </div>
-`);
-page.insertAdjacentHTML('beforeend', `
+`
+  );
+  page.insertAdjacentHTML(
+    "beforeend",
+    `
     <div class="_2z6nI">
         <div style="flex-direction: column;">
             <article class="FyNDV">
@@ -89,35 +108,43 @@ page.insertAdjacentHTML('beforeend', `
             </article>
         </div>
     </div>
-`);
-// article태그 DOM트리 탐색이 반복되므로, article 변수에 담아 객체 캐싱
-const article = page.querySelector('article');
-let grid = article.children[0].firstElementChild;
-let loading = article.children[1].firstElementChild;
-let more = article.children[2].firstElementChild;
-let p = 1;
-// 1페이지 호출 후 p가 2로 늘어남 (1만큼) - 증가연산은 값 평가 이후 수행됨
-const timelineList = await fetchApiData(url, p++);
-const divide = function(list, size) {
+`
+  );
+  // article태그 DOM트리 탐색이 반복되므로, article 변수에 담아 객체 캐싱
+  const article = page.querySelector("article");
+  let grid = article.children[0].firstElementChild;
+  let loading = article.children[1].firstElementChild;
+  let more = article.children[2].firstElementChild;
+  let p = 1;
+  // 1페이지 호출 후 p가 2로 늘어남 (1만큼) - 증가연산은 값 평가 이후 수행됨
+  const timelineList = await fetchApiData(url, p++);
+  const divide = function(list, size) {
     const copy = list.slice();
     const cnt = Math.floor(copy.length / size);
 
     const listList = [];
-    for(let i = 0; i < cnt; i++) {
-        listList.push(copy.splice(0, size));
+    for (let i = 0; i < cnt; i++) {
+      listList.push(copy.splice(0, size));
     }
     return listList;
-};
-const listList = divide(timelineList, 3);
-listList.forEach(list => {
-    grid.insertAdjacentHTML('beforeend', `
+  };
+
+  const listList = divide(timelineList, 3);
+
+  listList.forEach(list => {
+    grid.insertAdjacentHTML(
+      "beforeend",
+      `
         <div class="Nnq7C weEfm">
         </div>
-    `);
+    `
+    );
     let row = grid.lastElementChild;
 
     list.forEach(data => {
-        row.insertAdjacentHTML('beforeend', `
+      row.insertAdjacentHTML(
+        "beforeend",
+        `
             <div class="v1Nh3 kIKUG _bz0w">
                 <a href="javascript:;">
                     <div class="eLAPa">
@@ -125,21 +152,50 @@ listList.forEach(list => {
                     </div>
                 </a>
             </div>
-        `);
+        `
+      );
     });
-});
+  });
 
-// 필요한 시점에 로딩바(의 부모 래퍼div), 더보기버튼(의 부모 래퍼div) display: none; 제거
-more.parentElement.style.display = '';
-// more.parentElement.style.display = 'none';
-loading.parentElement.style.display = '';
-// loading.parentElement.style.display = 'none';
-console.log('>> p: ', p);
-console.log('>> totalPage: ', totalPage);
-const clickMore = function(e) {
-    alert('더보기 로직개발 필요');
-}
-// 필요한 시점에 추가한 이벤트리스너 제거
-more.addEventListener('click', clickMore);
-// more.removeEventListener('click', clickMore);
+  more.parentElement.style.display = "";
+  loading.parentElement.style.display = "";
+
+  const clickMore = async () => {
+    const timelineList = await fetchApiData(url, p++);
+    const listList = divide(timelineList, 3);
+
+    listList.forEach(list => {
+      grid.insertAdjacentHTML(
+        "beforeend",
+        `
+        <div class="Nnq7C weEfm">
+        </div>
+    `
+      );
+      let row = grid.lastElementChild;
+
+      list.forEach(data => {
+        row.insertAdjacentHTML(
+          "beforeend",
+          `
+            <div class="v1Nh3 kIKUG _bz0w">
+                <a href="javascript:;">
+                    <div class="eLAPa">
+                        <div class="KL4Bh"><img class="FFVAD" decoding="auto" src="${IMG_PATH}${data.img}" style="object-fit: cover;"></div>
+                    </div>
+                </a>
+            </div>
+        `
+        );
+      });
+    });
+
+    if (p === totalPage + 1) {
+      loading.parentElement.style.display = "none";
+      more.removeEventListener("click", clickMore);
+    }
+  };
+
+  more.addEventListener("click", clickMore);
+  // more.removeEventListener('click', clickMore);
 })();
