@@ -160,9 +160,32 @@ const grid = await (async ($parent, url) => {
     };
     const listList = divide(timelineList, 3);
 
+    // 검색창 input에 key이벤트 발생시 검색메소드 호출
     const render = () => {
         $parent.insertAdjacentHTML('beforeend', `
             <article class="FyNDV">
+                <div class="b5itu">
+                    <h1 class="K3Sf1">
+                        <div class="Igw0E rBNOH eGOV_ ybXk5 _4EzTm">
+                            <div class="Igw0E IwRSH eGOV_ vwCYk">
+                                <div class="Igw0E IwRSH eGOV_ ybXk5 _4EzTm">
+                                    <div class="Igw0E IwRSH eGOV_ vwCYk">
+                                        <label class="NcCcD">
+                                            <input autocapitalize="none" autocomplete="off" class="j_2Hd iwQA6 RO68f M5V28" placeholder="검색" spellcheck="true" type="search" value="" />
+                                            <div class="DWAFP">
+                                                <div class="Igw0E IwRSH eGOV_ _4EzTm">
+                                                    <span aria-label="검색" class="glyphsSpriteSearch u-__7"></span>
+                                                </div>
+                                                <span class="rwQu7">검색</span>
+                                            </div>
+                                            <div class="Igw0E rBNOH YBx95 _4EzTm ItkAi O1flK fm1AK TxciK yiMZG"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </h1>
+                </div>
                 <div>
                     <div style="flex-direction: column; padding-bottom: 0px; padding-top: 0px;">
                     </div>
@@ -193,7 +216,7 @@ grid.listList.forEach(list => {
     
         create();
         return { $el }
-    })(grid.$el);
+    })(grid.$el.lastElementChild.firstElementChild);
 
     list.forEach(data => {
         const gridItem = (($parent, data) => {
