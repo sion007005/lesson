@@ -4,7 +4,7 @@
  * All contents cannot be copied without permission.
  */
 (async () => {
-// 유틸리티성 객체 - 모든 객체에서 사용하는 공통속성, 공통메소드 보유 (경리사원)
+
 const common = (() => {
     const IMG_PATH = 'https://it-crafts.github.io/lesson/img';
     const fetchApiData = async (url, page = 'info') => {
@@ -16,30 +16,32 @@ const common = (() => {
     return { IMG_PATH, fetchApiData }
 })();
 
-// 루트 객체 - 본 SPA의 모든 하위객체에 최초의 명령을 내리는 주체 (본부장)
 const root = (() => {
-    const main = document.querySelector('main');
+    const $el = document.querySelector('main');
 
-    return { main }
+    return { $el }
 })();
 
-// 페이지 객체 - 요청된 URL PATH의 최상위객체, 라우팅의 주체 (팀장)
-const timeline = await (async(main) => {
+const timeline = await (async($parent) => {
     const url = 'https://my-json-server.typicode.com/it-crafts/lesson/timeline/';
     const infoData = await common.fetchApiData(url);
     const totalPage = infoData.totalPage * 1;
     const profileData = infoData.profile;
-    main.innerHTML = `
+    $parent.innerHTML = `
         <div class="v9tJq">
+            <div class="fx7hk">
+                <a class="_9VEo1 T-jvg" href="javascript:;" data-type="grid"><span aria-label="게시물" class="glyphsSpritePhoto_grid__outline__24__grey_5 u-__7"></span></a>
+                <a class="_9VEo1" href="javascript:;" data-type="feed"><span aria-label="피드" class="glyphsSpritePhoto_list__outline__24__grey_5 u-__7"></span></a>
+                <a class="_9VEo1" href="javascript:;" data-type=""><span aria-label="태그됨" class="glyphsSpriteTag_up__outline__24__blue_5 u-__7"></span></a>
+            </div>
         </div>
     `;
-    let page = main.firstElementChild;
+    const $el = $parent.firstElementChild;
 
-    return { page, totalPage, profileData, url }
-})(root.main);
+    return { $el, totalPage, profileData, url }
+})(root.$el);
 
-// 페이지 객체의 하위섹션 객체, 여기서는 헤더영역 담당 (파트장1)
-const timelineProfile = ((page, profileData) => {
+const timelineProfile = (($parent, profileData) => {
     const scaleDown = numstring => {
         const num = numstring.replace(/,/g, '');
         if(num >= 1000000) {
@@ -50,49 +52,48 @@ const timelineProfile = ((page, profileData) => {
         }
         return num;
     };
-    page.insertAdjacentHTML('afterbegin', `
-        <header class="HVbuG">
-            <div class="XjzKX">
-                <div class="RR-M- h5uC0" role="button" tabindex="0">
-                    <canvas class="CfWVH" height="91" width="91" style="position: absolute; top: -7px; left: -7px; width: 91px; height: 91px;"></canvas>
-                    <span class="_2dbep" role="link" tabindex="0" style="width: 77px; height: 77px;"><img alt="${profileData.name}님의 프로필 사진" class="_6q-tv" src="${common.IMG_PATH}${profileData.img}"></span>
-                </div>
-            </div>
-            <section class="zwlfE">
-                <div class="nZSzR">
-                    <h1 class="_7UhW9 fKFbl yUEEX KV-D4 fDxYl">${profileData.name}</h1>
-                    <span class="mrEK_ Szr5J coreSpriteVerifiedBadge" title="인증됨">인증됨</span>
-                    <div class="AFWDX"><button class="dCJp8 afkep"><span aria-label="옵션" class="glyphsSpriteMore_horizontal__outline__24__grey_9 u-__7"></span></button></div>
-                </div>
-                <div class="Y2E37">
-                    <div class="Igw0E IwRSH eGOV_ vwCYk">
-                        <span class="ffKix bqE32">
-                            <span class="vBF20 _1OSdk"><button class="_5f5mN jIbKX _6VtSN yZn4P">팔로우</button></span>
-                            <span class="mLCHD _1OSdk"><button class="_5f5mN jIbKX KUBKM yZn4P"><div class="OfoBO"><div class="_5fEvj coreSpriteDropdownArrowWhite"></div></div></button></span>
-                        </span>
+    $parent.insertAdjacentHTML('afterbegin', `
+        <div>
+            <header class="HVbuG">
+                <div class="XjzKX">
+                    <div class="RR-M- h5uC0" role="button" tabindex="0">
+                        <canvas class="CfWVH" height="91" width="91" style="position: absolute; top: -7px; left: -7px; width: 91px; height: 91px;"></canvas>
+                        <span class="_2dbep" role="link" tabindex="0" style="width: 77px; height: 77px;"><img alt="${profileData.name}님의 프로필 사진" class="_6q-tv" src="${common.IMG_PATH}${profileData.img}"></span>
                     </div>
                 </div>
-            </section>
-        </header>
-        <div class="-vDIg">
-            <h1 class="rhpdm">${profileData.title}</h1><br><span>${profileData.text}</span>
-        </div>
-        <ul class="_3dEHb">
-            <li class="LH36I"><span class="_81NM2">게시물 <span class="g47SY lOXF2">${profileData.post}</span></span></li>
-            <li class="LH36I"><a class="_81NM2" href="javascript:;">팔로워 <span class="g47SY lOXF2" title="${profileData.follower}">${scaleDown(profileData.follower)}</span></a></li>
-            <li class="LH36I"><a class="_81NM2" href="javascript:;">팔로우 <span class="g47SY lOXF2">${profileData.follow}</span></a></li>
-        </ul>
-        <div class="fx7hk">
-            <a class="_9VEo1 T-jvg" href="javascript:;" data-type="grid"><span aria-label="게시물" class="glyphsSpritePhoto_grid__outline__24__grey_5 u-__7"></span></a>
-            <a class="_9VEo1" href="javascript:;" data-type="feed"><span aria-label="피드" class="glyphsSpritePhoto_list__outline__24__grey_5 u-__7"></span></a>
-            <a class="_9VEo1" href="javascript:;" data-type=""><span aria-label="태그됨" class="glyphsSpriteTag_up__outline__24__blue_5 u-__7"></span></a>
+                <section class="zwlfE">
+                    <div class="nZSzR">
+                        <h1 class="_7UhW9 fKFbl yUEEX KV-D4 fDxYl">${profileData.name}</h1>
+                        <span class="mrEK_ Szr5J coreSpriteVerifiedBadge" title="인증됨">인증됨</span>
+                        <div class="AFWDX"><button class="dCJp8 afkep"><span aria-label="옵션" class="glyphsSpriteMore_horizontal__outline__24__grey_9 u-__7"></span></button></div>
+                    </div>
+                    <div class="Y2E37">
+                        <div class="Igw0E IwRSH eGOV_ vwCYk">
+                            <span class="ffKix bqE32">
+                                <span class="vBF20 _1OSdk"><button class="_5f5mN jIbKX _6VtSN yZn4P">팔로우</button></span>
+                                <span class="mLCHD _1OSdk"><button class="_5f5mN jIbKX KUBKM yZn4P"><div class="OfoBO"><div class="_5fEvj coreSpriteDropdownArrowWhite"></div></div></button></span>
+                            </span>
+                        </div>
+                    </div>
+                </section>
+            </header>
+            <div class="-vDIg">
+                <h1 class="rhpdm">${profileData.title}</h1><br><span>${profileData.text}</span>
+            </div>
+            <ul class="_3dEHb">
+                <li class="LH36I"><span class="_81NM2">게시물 <span class="g47SY lOXF2">${profileData.post}</span></span></li>
+                <li class="LH36I"><a class="_81NM2" href="javascript:;">팔로워 <span class="g47SY lOXF2" title="${profileData.follower}">${scaleDown(profileData.follower)}</span></a></li>
+                <li class="LH36I"><a class="_81NM2" href="javascript:;">팔로우 <span class="g47SY lOXF2">${profileData.follow}</span></a></li>
+            </ul>
         </div>
     `);
-})(timeline.page, timeline.profileData);
+    const $el = $parent.firstElementChild;
 
-// 페이지 객체의 하위섹션 객체, 여기서는 콘텐츠영역 담당 (파트장2)
-const timelineContent = ((page) => {
-    page.insertAdjacentHTML('beforeend', `
+    return { $el }
+})(timeline.$el, timeline.profileData);
+
+const timelineContent = (($parent) => {
+    $parent.insertAdjacentHTML('beforeend', `
         <div class="_2z6nI">
             <div style="flex-direction: column;">
                 <article class="FyNDV">
@@ -110,17 +111,17 @@ const timelineContent = ((page) => {
                 </article>
             </div>
         </div>
-    `);    
-    const article = page.querySelector('article');
+    `);
+    const $el = $parent.lastElementChild;
 
-    return { article }
-})(timeline.page);
+    return { $el }
+})(timeline.$el);
 
-// 여러 페이지에서 반복사용 가능한 객체, 그리드영역 전문화 (실무사원)
-const grid = await (async (article, url) => {
-    let grid = article.children[0].firstElementChild;
-    let loading = article.children[1].firstElementChild;
-    let more = article.children[2].firstElementChild;
+const grid = await (async ($parent, url) => {
+    const $article = $parent.querySelector('article');
+    const $el = $article.children[0].firstElementChild;
+    const $loading = $article.children[1].firstElementChild;
+    const $more = $article.children[2].firstElementChild;
     let page = 1;
     const timelineList = await common.fetchApiData(url, page++);
     const divide = (list, size) => {
@@ -135,11 +136,11 @@ const grid = await (async (article, url) => {
     };
     const listList = divide(timelineList, 3);
     listList.forEach(list => {
-        grid.insertAdjacentHTML('beforeend', `
+        $el.insertAdjacentHTML('beforeend', `
             <div class="Nnq7C weEfm">
             </div>
         `);
-        let row = grid.lastElementChild;
+        let row = $el.lastElementChild;
     
         list.forEach(data => {
             row.insertAdjacentHTML('beforeend', `
@@ -153,5 +154,5 @@ const grid = await (async (article, url) => {
             `);
         });
     });
-})(timelineContent.article, timeline.url);
+})(timelineContent.$el, timeline.url);
 })();
