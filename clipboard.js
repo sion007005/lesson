@@ -160,8 +160,18 @@ const grid = await (async ($parent, url) => {
     };
     const listList = divide(timelineList, 3);
 
-    // TODO 검색창 input에 key이벤트 발생시 검색메소드 호출
-    // TODO 최신순/인기순 클릭시 해당 정렬메소드 호출
+    const filter = () => {
+        // 현재는 각 컴포넌트가 destroy 미지원 -> 그냥 DOM만 비우고, 새로 gridItem들 생성
+        $el.lastElementChild.firstElementChild.innerHTML = '';
+        // TODO 검색창 input에 key이벤트 발생시 검색로직 수행
+    }
+
+    const sort = () => {
+        // 현재는 각 컴포넌트가 destroy 미지원 -> 그냥 DOM만 비우고, 새로 gridItem들 생성
+        $el.lastElementChild.firstElementChild.innerHTML = '';
+        // TODO 최신순/인기순 클릭시 해당 정렬로직 수행
+    }
+
     const render = () => {
         $parent.insertAdjacentHTML('beforeend', `
             <article class="FyNDV">
