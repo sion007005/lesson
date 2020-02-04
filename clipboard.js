@@ -17,16 +17,27 @@ const common = (() => {
 })();
 
 const root = (() => {
-    const $el = document.querySelector('main');
+    let $el;
 
+    const create = () => {
+        $el = document.querySelector('main');
+    }
+
+    create();
     return { $el }
 })();
 
 const timeline = await (async($parent) => {
+    let $el;
     const url = 'https://my-json-server.typicode.com/it-crafts/lesson/timeline/';
     const infoData = await common.fetchApiData(url);
     const totalPage = infoData.totalPage * 1;
     const profileData = infoData.profile;
+
+    const create = () => {
+        render();
+        $el = $parent.firstElementChild;
+    }
 
     const render = () => {
         $parent.innerHTML = `
@@ -39,13 +50,19 @@ const timeline = await (async($parent) => {
             </div>
         `;
     }
-    render();
-    const $el = $parent.firstElementChild;
 
+    create();
     return { $el, totalPage, profileData, url }
 })(root.$el);
 
 const timelineProfile = (($parent, profileData) => {
+    let $el;
+
+    const create = () => {
+        render(profileData);
+        $el = $parent.firstElementChild;
+    }
+
     const scaleDown = numstring => {
         const num = numstring.replace(/,/g, '');
         if(num >= 1000000) {
@@ -94,13 +111,19 @@ const timelineProfile = (($parent, profileData) => {
             </div>
         `);
     }
-    render(profileData);
-    const $el = $parent.firstElementChild;
 
+    create();
     return { $el }
 })(timeline.$el, timeline.profileData);
 
 const timelineContent = (($parent) => {
+    let $el;
+
+    const create = () => {
+        render();
+        $el = $parent.lastElementChild;
+    }
+
     const render = () => {
         $parent.insertAdjacentHTML('beforeend', `
             <div class="_2z6nI">
@@ -109,15 +132,22 @@ const timelineContent = (($parent) => {
             </div>
         `);
     }
-    render();
-    const $el = $parent.lastElementChild;
 
+    create();
     return { $el }
 })(timeline.$el);
 
 const grid = await (async ($parent, url) => {
+    let $el;
+
     let page = 1;
     const timelineList = await common.fetchApiData(url, page++);
+
+    const create = () => {
+        render();
+        $el = $parent.lastElementChild;
+    }
+
     const divide = (list, size) => {
         const copy = list.slice();
         const cnt = Math.floor(copy.length / size);
@@ -140,28 +170,40 @@ const grid = await (async ($parent, url) => {
             </article>
         `);
     }
-    render();
-    const $el = $parent.lastElementChild;
 
+    create();
     return { $el, listList }
 })(timelineContent.$el.firstElementChild, timeline.url);
 
 grid.listList.forEach(list => {
     const gridRow = (($parent) => {
+        let $el;
+
+        const create = () => {
+            render();
+            $el = $parent.lastElementChild;
+        }
+
         const render = () => {
             $parent.insertAdjacentHTML('beforeend', `
                 <div class="Nnq7C weEfm">
                 </div>
             `);
         }
-        render();
-        const $el = $parent.lastElementChild;
     
+        create();
         return { $el }
     })(grid.$el);
 
     list.forEach(data => {
         const gridItem = (($parent, data) => {
+            let $el;
+
+            const create = () => {
+                render();
+                $el = $parent.lastElementChild;
+            }
+
             const render = () => {
                 $parent.insertAdjacentHTML('beforeend', `
                     <div class="v1Nh3 kIKUG _bz0w">
@@ -173,13 +215,11 @@ grid.listList.forEach(list => {
                     </div>
                 `);
             }
-            render();
-            const $el = $parent.lastElementChild;
         
+            create();
             return { $el }
         })(gridRow.$el, data);
     });
 });
-
 
 })();
