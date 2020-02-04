@@ -147,7 +147,7 @@ const grid = await (async ($parent, url) => {
 })(timelineContent.$el.firstElementChild, timeline.url);
 
 grid.listList.forEach(list => {
-    const gridItem = (($parent, list) => {
+    const gridRow = (($parent) => {
         const render = () => {
             $parent.insertAdjacentHTML('beforeend', `
                 <div class="Nnq7C weEfm">
@@ -156,21 +156,29 @@ grid.listList.forEach(list => {
         }
         render();
         const $el = $parent.lastElementChild;
-
-        list.forEach(data => {
-            $el.insertAdjacentHTML('beforeend', `
-                <div class="v1Nh3 kIKUG _bz0w">
-                    <a href="javascript:;">
-                        <div class="eLAPa">
-                            <div class="KL4Bh"><img class="FFVAD" decoding="auto" src="${common.IMG_PATH}${data.img}" style="object-fit: cover;"></div>
-                        </div>
-                    </a>
-                </div>
-            `);
-        });
     
         return { $el }
-    })(grid.$el, list);
+    })(grid.$el);
+
+    list.forEach(data => {
+        const gridItem = (($parent, data) => {
+            const render = () => {
+                $parent.insertAdjacentHTML('beforeend', `
+                    <div class="v1Nh3 kIKUG _bz0w">
+                        <a href="javascript:;">
+                            <div class="eLAPa">
+                                <div class="KL4Bh"><img class="FFVAD" decoding="auto" src="${common.IMG_PATH}${data.img}" style="object-fit: cover;"></div>
+                            </div>
+                        </a>
+                    </div>
+                `);
+            }
+            render();
+            const $el = $parent.lastElementChild;
+        
+            return { $el }
+        })(gridRow.$el, data);
+    });
 });
 
 
