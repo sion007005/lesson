@@ -135,15 +135,19 @@ const grid = await (async ($parent, url) => {
         return listList;
     };
     const listList = divide(timelineList, 3);
-    listList.forEach(list => {
-        $el.insertAdjacentHTML('beforeend', `
+
+    return { $el, listList }
+})(timelineContent.$el, timeline.url);
+
+grid.listList.forEach(list => {
+    const gridItem = (($parent, list) => {
+        $parent.insertAdjacentHTML('beforeend', `
             <div class="Nnq7C weEfm">
             </div>
         `);
-        let row = $el.lastElementChild;
-    
+        let $el = $parent.lastElementChild;
         list.forEach(data => {
-            row.insertAdjacentHTML('beforeend', `
+            $el.insertAdjacentHTML('beforeend', `
                 <div class="v1Nh3 kIKUG _bz0w">
                     <a href="javascript:;">
                         <div class="eLAPa">
@@ -153,6 +157,10 @@ const grid = await (async ($parent, url) => {
                 </div>
             `);
         });
-    });
-})(timelineContent.$el, timeline.url);
+    
+        return { $el }
+    })(grid.$el, list);
+});
+
+
 })();
