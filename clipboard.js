@@ -160,11 +160,14 @@ const grid = await (async ($parent, url) => {
     };
     const listList = divide(timelineList, 3);
 
-    // 검색창 input에 key이벤트 발생시 검색메소드 호출
+    // TODO 검색창 input에 key이벤트 발생시 검색메소드 호출
+    // TODO 최신순/인기순 클릭시 해당 정렬메소드 호출
     const render = () => {
         $parent.insertAdjacentHTML('beforeend', `
             <article class="FyNDV">
-                <div class="b5itu">
+                <div class="Igw0E rBNOH YBx95 ybXk5 _4EzTm soMvl JI_ht bkEs3 DhRcB">
+                    <button class="sqdOP L3NKy y3zKF JI_ht" type="button">최신순</button>
+                    <button class="sqdOP L3NKy y3zKF JI_ht" type="button">인기순</button>
                     <h1 class="K3Sf1">
                         <div class="Igw0E rBNOH eGOV_ ybXk5 _4EzTm">
                             <div class="Igw0E IwRSH eGOV_ vwCYk">
