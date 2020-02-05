@@ -149,13 +149,19 @@ const grid = await (async ($parent, url) => {
     }
 
     const divide = (list, size) => {
-        const copy = list.slice();
-        const cnt = Math.floor(copy.length / size);
+        const copy = [...list];
+        const cnt = Math.ceil(copy.length / size);
     
         const listList = [];
         for(let i = 0; i < cnt; i++) {
             listList.push(copy.splice(0, size));
         }
+
+        const lastlist = listList[listList.length - 1];
+        for(let i = lastlist.length; i < size; i++) {
+            lastlist[i] = {};
+        }
+        
         return listList;
     };
     const listList = divide(timelineList, 3);
@@ -222,14 +228,17 @@ grid.listList.forEach(list => {
 
         const render = (list) => {
             const html = list.reduce((html, data) => {
-                html += `
-                    <div class="v1Nh3 kIKUG _bz0w">
-                        <a href="javascript:;">
-                            <div class="eLAPa">
-                                <div class="KL4Bh"><img class="FFVAD" decoding="auto" src="${common.IMG_PATH}${data.img}" style="object-fit: cover;"></div>
+                const img = (data.img || '') && `
+                    <a href="javascript:;">
+                        <div class="eLAPa">
+                            <div class="KL4Bh">
+                                <img class="FFVAD" decoding="auto" src="${common.IMG_PATH}${data.img}" style="object-fit: cover;">
                             </div>
-                        </a>
-                    </div>
+                        </div>
+                    </a>
+                `;
+                html += `
+                    <div class="v1Nh3 kIKUG _bz0w">${img}</div>
                 `;
                 return html;
             }, '');
