@@ -158,11 +158,17 @@
 //     });
 //   });
 
-  more.parentElement.style.display = "";
-  loading.parentElement.style.display = "";
+  // COMMENT 로딩바 기본상태는 감춤, 더보기버튼 노출은 1페이지 노출 이후에 totalPage 판단하여 노출
+//   more.parentElement.style.display = "";
+//   loading.parentElement.style.display = "";
 
   const clickMore = async () => {
+    // COMMENT 로딩바 노출, 더보기버튼 감춤
+    loading.parentElement.style.display = "";
+    more.parentElement.style.display = "none";
     const timelineList = await fetchApiData(url, p++);
+    // COMMENT 로딩바 감춤
+    loading.parentElement.style.display = "none";
     const listList = divide(timelineList, 3);
 
     listList.forEach(list => {
@@ -192,8 +198,10 @@
     });
 
     if (p === totalPage + 1) {
-      loading.parentElement.style.display = "none";
       more.removeEventListener("click", clickMore);
+    } else {
+        // COMMENT 더보기버튼 노출
+        more.parentElement.style.display = "";
     }
   };
 
