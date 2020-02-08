@@ -117,7 +117,8 @@
   let more = article.children[2].firstElementChild;
   let p = 1;
   // 1페이지 호출 후 p가 2로 늘어남 (1만큼) - 증가연산은 값 평가 이후 수행됨
-  const timelineList = await fetchApiData(url, p++);
+  /* TODO 기존 1페이지 조회로직은 단순히 clickMore를 한 번 부르도록 하여 공통화 했습니다 */
+//   const timelineList = await fetchApiData(url, p++);
   const divide = function(list, size) {
     const copy = list.slice();
     const cnt = Math.floor(copy.length / size);
@@ -129,39 +130,45 @@
     return listList;
   };
 
-  const listList = divide(timelineList, 3);
+//   const listList = divide(timelineList, 3);
 
-  listList.forEach(list => {
-    grid.insertAdjacentHTML(
-      "beforeend",
-      `
-        <div class="Nnq7C weEfm">
-        </div>
-    `
-    );
-    let row = grid.lastElementChild;
+//   listList.forEach(list => {
+//     grid.insertAdjacentHTML(
+//       "beforeend",
+//       `
+//         <div class="Nnq7C weEfm">
+//         </div>
+//     `
+//     );
+//     let row = grid.lastElementChild;
 
-    list.forEach(data => {
-      row.insertAdjacentHTML(
-        "beforeend",
-        `
-            <div class="v1Nh3 kIKUG _bz0w">
-                <a href="javascript:;">
-                    <div class="eLAPa">
-                        <div class="KL4Bh"><img class="FFVAD" decoding="auto" src="${IMG_PATH}${data.img}" style="object-fit: cover;"></div>
-                    </div>
-                </a>
-            </div>
-        `
-      );
-    });
-  });
+//     list.forEach(data => {
+//       row.insertAdjacentHTML(
+//         "beforeend",
+//         `
+//             <div class="v1Nh3 kIKUG _bz0w">
+//                 <a href="javascript:;">
+//                     <div class="eLAPa">
+//                         <div class="KL4Bh"><img class="FFVAD" decoding="auto" src="${IMG_PATH}${data.img}" style="object-fit: cover;"></div>
+//                     </div>
+//                 </a>
+//             </div>
+//         `
+//       );
+//     });
+//   });
 
-  more.parentElement.style.display = "";
-  loading.parentElement.style.display = "";
+  // COMMENT 로딩바 기본상태는 감춤, 더보기버튼 노출은 1페이지 노출 이후에 totalPage 판단하여 노출
+//   more.parentElement.style.display = "";
+//   loading.parentElement.style.display = "";
 
   const clickMore = async () => {
+    // COMMENT 로딩바 노출, 더보기버튼 감춤
+    loading.parentElement.style.display = "";
+    more.parentElement.style.display = "none";
     const timelineList = await fetchApiData(url, p++);
+    // COMMENT 로딩바 감춤
+    loading.parentElement.style.display = "none";
     const listList = divide(timelineList, 3);
 
     listList.forEach(list => {
@@ -191,11 +198,14 @@
     });
 
     if (p === totalPage + 1) {
-      loading.parentElement.style.display = "none";
       more.removeEventListener("click", clickMore);
+    } else {
+        // COMMENT 더보기버튼 노출
+        more.parentElement.style.display = "";
     }
   };
 
+  clickMore();
   more.addEventListener("click", clickMore);
   // more.removeEventListener('click', clickMore);
 })();
