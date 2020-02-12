@@ -141,7 +141,7 @@ const TimelineProfile = ($parent, profileData = {}) => {
 
 const TimelineContent = ($parent, url = '', profileData = {}) => {
     let $el;
-    const $feedList = [];
+    let $feed;
 
     let page = 1;
     const dataList = [];
@@ -150,9 +150,8 @@ const TimelineContent = ($parent, url = '', profileData = {}) => {
         render();
         $el = $parent.lastElementChild;
         const pageDataList = await fetch();
-        const feed = Feed($el.firstElementChild, profileData, pageDataList);
-        $feedList.push(feed);
-        $feedList[0].create()
+        $feed = Feed($el.firstElementChild, profileData, pageDataList);
+        $feed.create();
     }
 
     const destroy = () => {
@@ -164,6 +163,11 @@ const TimelineContent = ($parent, url = '', profileData = {}) => {
         const pageDataList = await common.fetchApiData(url, page++);
         dataList.push(pageDataList);
         return pageDataList;
+    }
+
+    const ajaxMore = async () => {
+        const pageDataList = await fetch();
+        $feed && $feed.addFeedItems(profileData, pageDataList);
     }
 
     const render = () => {
@@ -186,17 +190,21 @@ const TimelineContent = ($parent, url = '', profileData = {}) => {
 };
 
 const Feed = ($parent, profileData = {}, pageDataList = []) => {
-    let $elList;
+    const $elList = [];
 
     const create = () => {
-        // 추가된 엘리먼트 객체를 뽑아서 리스트를 만듦 - Template(Fragment) 도입 전까지 사용할 임시코드
-        const firstIndex = $parent.children.length;
-        render(profileData, pageDataList);
-        $elList = [].slice.call($parent.children, firstIndex);
+        addFeedItems(profileData, pageDataList);
     }
 
     const destroy = () => {
         $elList.forEach($parent.removeChild($el));
+    }
+
+    const addFeedItems = (profileData = {}, pageDataList = []) => {
+        // 추가된 엘리먼트 객체를 뽑아서 리스트를 만듦 - Template(Fragment) 도입 전까지 사용할 임시코드
+        const firstIndex = $parent.children.length;
+        render(profileData, pageDataList);
+        $elList.push(...[].slice.call($parent.children, firstIndex));
     }
 
     const render = (profileData, pageDataList) => {
@@ -267,7 +275,7 @@ const Feed = ($parent, profileData = {}, pageDataList = []) => {
         $parent.insertAdjacentHTML('beforeend', html);
     }
 
-    return { $elList, create, destroy }
+    return { $elList, create, destroy, addFeedItems }
 };
 
 const root = Root('main');
