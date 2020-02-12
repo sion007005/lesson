@@ -168,26 +168,17 @@ const TimelineContent = ($parent, url = '', profileData = {}, totalPage = 1) => 
 
     const initInfiniteScroll = () => {
         const $loading = $el.lastElementChild;
-        // 뷰포트(다른 부모 엘리먼트로 변경 가능)와 특정 엘리먼트의 교차시점을 캐치, 들어올때+나갔을때 콜백 실행
-        const io = new IntersectionObserver((entrieList, observer) => {
-            // 여러 엘리먼트를 등록할 수 있으므로, entrieList는 기본적으로 배열로 들어옴
-            entrieList.forEach(async entry => {
-                // 엘리먼트가 뷰포트와 교차하는지 여부
+        const io = new IntersectionObserver((entryList, observer) => {
+            entryList.forEach(async entry => {
                 if(!entry.isIntersecting) { return; }
                 await ajaxMore();
                 if(page >= totalPage) {
-                    // 무한스크롤 끝난 시점에 바라보기 종료
                     observer.unobserve(entry.target);
                     $loading.style.display = 'none';
                 }
-            });
+            }); // rootMargin 미동작 (인스타그램에서 자체적으로 막아놓은 것 같기도 함)
         });
-        // 무한스크롤을 위해 가시성 바라보기 시작, 여러개의 엘리먼트를 등록할 수도 있음
         io.observe($loading);
-        // io.observe($sample1);
-        // io.observe($sample2);
-        // io.observe($sample3);
-        // $sampleList.forEach($sample => io.observe($sample));
     }
 
     const ajaxMore = async () => {
@@ -210,6 +201,7 @@ const TimelineContent = ($parent, url = '', profileData = {}, totalPage = 1) => 
     return { $el, create, destroy }
 };
 
+// TODO 뷰 역할인 Feed 컴포넌트에 이미지 레이지로드 기능 추가 - initInfiniteScroll 히스토리 참고
 const Feed = ($parent, profileData = {}, pageDataList = []) => {
     const $elList = [];
 
