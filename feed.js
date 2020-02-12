@@ -21,15 +21,14 @@ const Root = (selector) => {
     const create = () => {
         $el = document.querySelector(selector);
         $page = Timeline($el);
+        $page.create();
     }
 
     const destroy = () => {
-        // 자식 컴포넌트가 존재하면, destroy
         $page && $page.destroy();
     }
 
-    create();
-    return { $el, destroy }
+    return { $el, create, destroy }
 };
 
 const Timeline = ($parent) => {
@@ -43,14 +42,14 @@ const Timeline = ($parent) => {
         $el = $parent.firstElementChild;
         const [ totalPage, profileData ] = await fetch();
         $profile = TimelineProfile($el, profileData);
+        $profile.create();
         $content = TimelineContent($el, URL, profileData);
+        $content.create();
     }
 
     const destroy = () => {
-        // 자식 컴포넌트가 존재하면, destroy
         $profile && $profile.destroy();
         $content && $content.destroy();
-        // 자기자신 컴포넌트 엘리먼트 제거
         $parent.removeChild($el);
     }
 
@@ -73,8 +72,7 @@ const Timeline = ($parent) => {
         `;
     }
 
-    create();
-    return { $el, destroy }
+    return { $el, create, destroy }
 };
 
 const TimelineProfile = ($parent, profileData) => {
@@ -86,7 +84,6 @@ const TimelineProfile = ($parent, profileData) => {
     }
 
     const destroy = () => {
-        // 자기자신 컴포넌트 엘리먼트 제거
         $parent.removeChild($el);
     }
 
@@ -139,8 +136,7 @@ const TimelineProfile = ($parent, profileData) => {
         `);
     }
 
-    create();
-    return { $el, destroy }
+    return { $el, create, destroy }
 };
 
 const TimelineContent = ($parent, url, profileData) => {
@@ -154,14 +150,13 @@ const TimelineContent = ($parent, url, profileData) => {
         render();
         $el = $parent.lastElementChild;
         const pageData = await fetch();
-        const feedItemList = pageData.map(data => FeedItem($el.firstElementChild, profileData, data));
+        const feedItemList = pageData.map(data => FeedItem($el.firstElementChild, profileData, data))
         $feedItemList.push(...feedItemList);
+        $feedItemList.forEach($feedItem => $feedItem.create());
     }
 
     const destroy = () => {
-        // 자식 컴포넌트가 존재하면, destroy
         Array.isArray($feedItemList) && $feedItemList.forEach($feedItem => $feedItem.destroy());
-        // 자기자신 컴포넌트 엘리먼트 제거
         $parent.removeChild($el);
     }
 
@@ -187,24 +182,22 @@ const TimelineContent = ($parent, url, profileData) => {
         `);
     }
 
-    create();
-    return { $el, destroy }
+    return { $el, create, destroy }
 };
 
 const FeedItem = ($parent, profileData, data) => {
     let $el;
 
     const create = () => {
-        render(data);
+        render(profileData, data);
         $el = $parent.lastElementChild;
     }
 
     const destroy = () => {
-        // 자기자신 컴포넌트 엘리먼트 제거
         $parent.removeChild($el);
     }
 
-    const render = (data) => {
+    const render = (profileData, data) => {
         $parent.insertAdjacentHTML('beforeend', `
             <article id="feed" class="M9sTE h0YNM SgTZ1">
                 <header class="Ppjfr UE9AK wdOqh">
@@ -268,9 +261,10 @@ const FeedItem = ($parent, profileData, data) => {
         `);
     }
 
-    create();
-    return { $el, destroy }
+    return { $el, create, destroy }
 };
 
 const root = Root('main');
-// root.destroy(); // 해당라인 실행시 APP구동 이전상태로 초기화된다
+root.create();
+// root.destroy();
+// root.create(); // destroy 후 다시 create 하면 초기상태로 APP 재구동 된다
