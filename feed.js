@@ -10,7 +10,7 @@ const common = (() => {
         const data = await res.json();
         return data.data;
     }
-    
+
     return { IMG_PATH, fetchApiData }
 })();
 
@@ -43,7 +43,7 @@ const Timeline = ($parent) => {
         const [ totalPage, profileData ] = await fetch();
         $profile = TimelineProfile($el, profileData);
         $profile.create();
-        $content = TimelineContent($el, URL, profileData);
+        $content = TimelineContent($el, URL, profileData, totalPage);
         $content.create();
     }
 
@@ -139,11 +139,11 @@ const TimelineProfile = ($parent, profileData = {}) => {
     return { $el, create, destroy }
 };
 
-const TimelineContent = ($parent, url = '', profileData = {}) => {
+const TimelineContent = ($parent, url = '', profileData = {}, totalPage = 1) => {
     let $el;
     let $feed;
 
-    let page = 1;
+    let page = 0;
     const dataList = [];
 
     const create = async () => {
@@ -152,6 +152,7 @@ const TimelineContent = ($parent, url = '', profileData = {}) => {
         const pageDataList = await fetch();
         $feed = Feed($el.firstElementChild, profileData, pageDataList);
         $feed.create();
+        initInfiniteScroll();
     }
 
     const destroy = () => {
@@ -160,9 +161,33 @@ const TimelineContent = ($parent, url = '', profileData = {}) => {
     }
 
     const fetch = async () => {
-        const pageDataList = await common.fetchApiData(url, page++);
+        const pageDataList = await common.fetchApiData(url, ++page);
         dataList.push(pageDataList);
         return pageDataList;
+    }
+
+    const initInfiniteScroll = () => {
+        const $loading = $el.lastElementChild;
+        // 뷰포트(다른 부모 엘리먼트로 변경 가능)와 특정 엘리먼트의 교차시점을 캐치, 들어올때+나갔을때 콜백 실행
+        const io = new IntersectionObserver((entrieList, observer) => {
+            // 여러 엘리먼트를 등록할 수 있으므로, entrieList는 기본적으로 배열로 들어옴
+            entrieList.forEach(async entry => {
+                // 엘리먼트가 뷰포트와 교차하는지 여부
+                if(!entry.isIntersecting) { return; }
+                await ajaxMore();
+                if(page >= totalPage) {
+                    // 무한스크롤 끝난 시점에 바라보기 종료
+                    observer.unobserve(entry.target);
+                    $loading.style.display = 'none';
+                }
+            });
+        });
+        // 무한스크롤을 위해 가시성 바라보기 시작, 여러개의 엘리먼트를 등록할 수도 있음
+        io.observe($loading);
+        // io.observe($sample1);
+        // io.observe($sample2);
+        // io.observe($sample3);
+        // $sampleList.forEach($sample => io.observe($sample));
     }
 
     const ajaxMore = async () => {
@@ -175,12 +200,8 @@ const TimelineContent = ($parent, url = '', profileData = {}) => {
             <div class="_2z6nI">
                 <div style="flex-direction: column;">
                 </div>
-                <div style="/*display: none;*/" class="_4emnV">
+                <div class="_4emnV">
                     <div class="Igw0E IwRSH YBx95 _4EzTm _9qQ0O ZUqME" style="height: 32px; width: 32px;"><svg aria-label="읽어들이는 중..." class="By4nA" viewBox="0 0 100 100"><rect fill="#555555" height="6" opacity="0" rx="3" ry="3" transform="rotate(-90 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.08333333333333333" rx="3" ry="3" transform="rotate(-60 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.16666666666666666" rx="3" ry="3" transform="rotate(-30 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.25" rx="3" ry="3" transform="rotate(0 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.3333333333333333" rx="3" ry="3" transform="rotate(30 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.4166666666666667" rx="3" ry="3" transform="rotate(60 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.5" rx="3" ry="3" transform="rotate(90 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.5833333333333334" rx="3" ry="3" transform="rotate(120 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.6666666666666666" rx="3" ry="3" transform="rotate(150 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.75" rx="3" ry="3" transform="rotate(180 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.8333333333333334" rx="3" ry="3" transform="rotate(210 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.9166666666666666" rx="3" ry="3" transform="rotate(240 50 50)" width="25" x="72" y="47"></rect></svg></div>
-                </div>
-                <div class="Igw0E rBNOH YBx95 ybXk5 _4EzTm soMvl" style="margin-right: 8px;/* display: none;*/">
-                    <button class="sqdOP L3NKy y3zKF _4pI4F" type="button" style="margin: 16px 8px">더보기</button>
-                    <button class="sqdOP L3NKy y3zKF _4pI4F" type="button" style="margin: 16px 8px">전체보기</button>
                 </div>
             </div>
         `);
@@ -201,7 +222,6 @@ const Feed = ($parent, profileData = {}, pageDataList = []) => {
     }
 
     const addFeedItems = (profileData = {}, pageDataList = []) => {
-        // 추가된 엘리먼트 객체를 뽑아서 리스트를 만듦 - Template(Fragment) 도입 전까지 사용할 임시코드
         const firstIndex = $parent.children.length;
         render(profileData, pageDataList);
         $elList.push(...[].slice.call($parent.children, firstIndex));
@@ -281,4 +301,4 @@ const Feed = ($parent, profileData = {}, pageDataList = []) => {
 const root = Root('main');
 root.create();
 // root.destroy();
-// root.create(); // destroy 후 다시 create 하면 초기상태로 APP 재구동 된다
+// root.create();
