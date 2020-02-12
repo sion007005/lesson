@@ -27,7 +27,7 @@ const root = (() => {
     return { $el }
 })();
 
-const timeline = await (async($parent) => {
+const timeline = await (async ($parent) => {
     let $el;
     const url = 'https://my-json-server.typicode.com/it-crafts/lesson/timeline/';
     const infoData = await common.fetchApiData(url);
@@ -116,8 +116,12 @@ const timelineProfile = (($parent, profileData) => {
     return { $el }
 })(timeline.$el, timeline.profileData);
 
-const timelineContent = (($parent) => {
+// 그리드/피드 페이지와 마크업구조가 달라, 싱크 맞춰서 템플릿 재조립 및 API 호출위치 이동
+const timelineContent = await (async ($parent, url, profileData) => {
     let $el;
+
+    let page = 1;
+    const list = await common.fetchApiData(url, page++);
 
     const create = () => {
         render();
@@ -141,90 +145,87 @@ const timelineContent = (($parent) => {
     }
 
     create();
-    return { $el }
-})(timeline.$el);
+    // feedItem안에 프로필정보가 필요하여, timelineContent에서 받아서 단순전달
+    return { $el, list, profileData }
+})(timeline.$el, timeline.url, timeline.profileData);
 
-const grid = await (async ($parent, url) => {
-    let $el;
-
-    let page = 1;
-    const ITEM_PER_ROW = 3;
-    const timelineList = await common.fetchApiData(url, page++);
-
-    const create = () => {
-        render();
-        $el = $parent.lastElementChild;
-    }
-
-    const divide = (list, size) => {
-        const copy = [...list];
-        const cnt = Math.ceil(copy.length / size);
-    
-        const listList = [];
-        for(let i = 0; i < cnt; i++) {
-            listList.push(copy.splice(0, size));
-        }
-
-        const lastlist = listList[listList.length - 1];
-        for(let i = lastlist.length; i < size; i++) {
-            lastlist[i] = {};
-        }
-        
-        return listList;
-    };
-    const listList = divide(timelineList, ITEM_PER_ROW);
-
-    const render = () => {
-        $parent.insertAdjacentHTML('beforeend', `
-            <article class="FyNDV">
-                <div>
-                    <div style="flex-direction: column; padding-bottom: 0px; padding-top: 0px;">
-                    </div>
-                </div>
-            </article>
-        `);
-    }
-
-    create();
-    return { $el, listList }
-})(timelineContent.$el.firstElementChild, timeline.url);
-
-grid.listList.forEach(list => {
-    const gridItem = (($parent, list) => {
+timelineContent.list.forEach(data => {
+    // feedItem 컴포넌트 단순추가, 별다른 특이사항은 없음
+    const feedItem = (($parent, profileData, data) => {
         let $el;
 
         const create = () => {
-            render(list);
+            render(data);
             $el = $parent.lastElementChild;
         }
 
-        const render = (list) => {
-            const html = list.reduce((html, data) => {
-                const img = (data.img || '') && `
-                    <a href="javascript:;">
-                        <div class="eLAPa">
-                            <div class="KL4Bh">
-                                <img class="FFVAD" decoding="auto" src="${common.IMG_PATH}${data.img}" style="object-fit: cover;">
+        const render = (data) => {
+            $parent.insertAdjacentHTML('beforeend', `
+                <article id="feed" class="M9sTE h0YNM SgTZ1">
+                    <header class="Ppjfr UE9AK wdOqh">
+                        <div class="RR-M- h5uC0 mrq0Z" role="button" tabindex="0">
+                            <canvas class="CfWVH" height="126" width="126" style="position: absolute; top: -5px; left: -5px; width: 42px; height: 42px;"></canvas>
+                            <span class="_2dbep" role="link" tabindex="0" style="width: 32px; height: 32px;"><img alt="${profileData.name}님의 프로필 사진" class="_6q-tv" src="${common.IMG_PATH}${profileData.img}"></span>
+                        </div>
+                        <div class="o-MQd">
+                            <div class="e1e1d">
+                                <h2 class="BrX75"><a class="FPmhX notranslate nJAzx" title="${profileData.name}" href="javascript:;">${profileData.name}</a></h2>
                             </div>
                         </div>
-                    </a>
-                `;
-                html += `
-                    <div class="v1Nh3 kIKUG _bz0w">${img}</div>
-                `;
-                return html;
-            }, '');
-            
-            $parent.insertAdjacentHTML('beforeend', `
-                <div class="Nnq7C weEfm">
-                    ${html}
-                </div>
+                    </header>
+                    <div class="_97aPb">
+                        <div role="button" tabindex="0" class="ZyFrc">
+                            <div class="eLAPa kPFhm">
+                                <div class="KL4Bh" style="padding-bottom: 100%;"><img class="FFVAD" alt="${data.name}" src="${common.IMG_PATH}${data.img}" style="object-fit: cover;"></div>
+                                <div class="_9AhH0"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="eo2As">
+                        <section class="ltpMr Slqrh">
+                            <span class="fr66n"><button class="dCJp8 afkep"><span aria-label="좋아요" class="glyphsSpriteHeart__outline__24__grey_9 u-__7"></span></button></span>
+                            <span class="_15y0l"><button class="dCJp8 afkep"><span aria-label="댓글 달기" class="glyphsSpriteComment__outline__24__grey_9 u-__7"></span></button></span>
+                            <span class="_5e4p"><button class="dCJp8 afkep"><span aria-label="게시물 공유" class="glyphsSpriteDirect__outline__24__grey_9 u-__7"></span></button></span>
+                            <span class="wmtNn"><button class="dCJp8 afkep"><span aria-label="저장" class="glyphsSpriteSave__outline__24__grey_9 u-__7"></span></button></span>
+                        </section>
+                        <section class="EDfFK ygqzn">
+                            <div class=" Igw0E IwRSH eGOV_ ybXk5 vwCYk">
+                                <div class="Nm9Fw"><a class="zV_Nj" href="javascript:;">좋아요 <span>${data.clipCount}</span>개</a></div>
+                            </div>
+                        </section>
+                        <div class="KlCQn EtaWk">
+                            <ul class="k59kT">
+                                <div role="button" class="ZyFrc">
+                                    <li class="gElp9" role="menuitem">
+                                        <div class="P9YgZ">
+                                            <div class="C7I1f X7jCj">
+                                                <div class="C4VMK">
+                                                    <h2 class="_6lAjh"><a class="FPmhX notranslate TlrDj" title="${profileData.name}" href="javascript:;">${profileData.name}</a></h2>
+                                                    <span>${data.text}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </div>
+                                <li class="lnrre">
+                                    <button class="Z4IfV sqdOP yWX7d y3zKF" type="button">댓글 <span>${data.commentCount}</span>개 모두 보기</button>
+                                </li>
+                            </ul>
+                        </div>
+                        <section class="sH9wk _JgwE eJg28">
+                            <div class="RxpZH"></div>
+                        </section>
+                    </div>
+                    <div class="MEAGs">
+                        <button class="dCJp8 afkep"><span aria-label="옵션 더 보기" class="glyphsSpriteMore_horizontal__outline__24__grey_9 u-__7"></span></button>
+                    </div>
+                </article>
             `);
         }
     
         create();
         return { $el }
-    })(grid.$el.firstElementChild.firstElementChild, list);
+    })(timelineContent.$el.firstElementChild, timelineContent.profileData, data);
 });
 
 })();
