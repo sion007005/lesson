@@ -16,11 +16,13 @@ const common = (() => {
     return { IMG_PATH, fetchApiData }
 })();
 
-const Root = () => {
+const Root = (selector) => {
     let $el;
+    let $page; // 자식 컴포넌트
 
     const create = () => {
-        $el = document.querySelector('main');
+        $el = document.querySelector(selector);
+        $page = Timeline($el);
     }
 
     create();
@@ -28,22 +30,25 @@ const Root = () => {
 };
 
 const Timeline = ($parent) => {
+    const URL = 'https://my-json-server.typicode.com/it-crafts/lesson/timeline/';
     let $el;
-    const url = 'https://my-json-server.typicode.com/it-crafts/lesson/timeline/';
-    let totalPage = 0;
-    const profileData = {};
+    let $profile; // 자식 컴포넌트
+    let $content; // 자식 컴포넌트
 
     const create = async () => {
         render();
         $el = $parent.firstElementChild;
-        await fetch();
+        // 디스트럭쳐링 기반 다중값 리턴
+        const [ totalPage, profileData ] = await fetch();
+        $profile = TimelineProfile($el, profileData);
+        $content = TimelineContent($el, URL, profileData);
     }
 
     const fetch = async () => {
-        const infoData = await common.fetchApiData(url);
-        totalPage = infoData.totalPage * 1;
-        Object.assign(profileData, infoData.profile);
-        return infoData;
+        const infoData = await common.fetchApiData(URL);
+        const totalPage = infoData.totalPage * 1;
+        const profileData = infoData.profile;
+        return [ totalPage, profileData ];
     }
 
     const render = () => {
@@ -59,7 +64,7 @@ const Timeline = ($parent) => {
     }
 
     create();
-    return { $el, totalPage, profileData, url }
+    return { $el }
 };
 
 const TimelineProfile = ($parent, profileData) => {
@@ -125,6 +130,7 @@ const TimelineProfile = ($parent, profileData) => {
 
 const TimelineContent = ($parent, url, profileData) => {
     let $el;
+    const $feedItemList = []; // 자식 컴포넌트 리스트
 
     let page = 1;
     const list = [];
@@ -132,7 +138,9 @@ const TimelineContent = ($parent, url, profileData) => {
     const create = async () => {
         render();
         $el = $parent.lastElementChild;
-        await fetch();
+        const pageData = await fetch();
+        const feedItemList = pageData.map(data => FeedItem($el.firstElementChild, profileData, data));
+        $feedItemList.push(...feedItemList);
     }
 
     const fetch = async () => {
@@ -237,4 +245,5 @@ const FeedItem = ($parent, profileData, data) => {
     return { $el }
 };
 
+const app = Root('main');
 })();
