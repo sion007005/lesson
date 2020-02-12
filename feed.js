@@ -16,7 +16,7 @@ const common = (() => {
     return { IMG_PATH, fetchApiData }
 })();
 
-const root = (() => {
+const Root = () => {
     let $el;
 
     const create = () => {
@@ -25,18 +25,28 @@ const root = (() => {
 
     create();
     return { $el }
-})();
+};
 
-const timeline = await (async ($parent) => {
+// 컴포넌트 레벨 async/await 제거 후 생성자로 변경
+const Timeline = ($parent) => {
     let $el;
     const url = 'https://my-json-server.typicode.com/it-crafts/lesson/timeline/';
-    const infoData = await common.fetchApiData(url);
-    const totalPage = infoData.totalPage * 1;
-    const profileData = infoData.profile;
+    // 원시타입은 let, 참조타입은 const
+    let totalPage = 0;
+    const profileData = {};
 
-    const create = () => {
+    const create = async () => {
         render();
         $el = $parent.firstElementChild;
+        await fetch();
+    }
+
+    // API 호출로직을 별도의 fetch 메소드로 분리
+    const fetch = async () => {
+        const infoData = await common.fetchApiData(url);
+        totalPage = infoData.totalPage * 1;
+        Object.assign(profileData, infoData.profile);
+        return infoData;
     }
 
     const render = () => {
@@ -53,9 +63,9 @@ const timeline = await (async ($parent) => {
 
     create();
     return { $el, totalPage, profileData, url }
-})(root.$el);
+};
 
-const timelineProfile = (($parent, profileData) => {
+const TimelineProfile = ($parent, profileData) => {
     let $el;
 
     const create = () => {
@@ -114,18 +124,25 @@ const timelineProfile = (($parent, profileData) => {
 
     create();
     return { $el }
-})(timeline.$el, timeline.profileData);
+};
 
-// 그리드/피드 페이지와 마크업구조가 달라, 싱크 맞춰서 템플릿 재조립 및 API 호출위치 이동
-const timelineContent = await (async ($parent, url, profileData) => {
+// 컴포넌트 레벨 async/await 제거 후 생성자로 변경
+const TimelineContent = ($parent, url, profileData) => {
     let $el;
 
     let page = 1;
-    const list = await common.fetchApiData(url, page++);
+    const list = [];
 
-    const create = () => {
+    const create = async () => {
         render();
         $el = $parent.lastElementChild;
+        await fetch();
+    }
+
+    const fetch = async () => {
+        const pageData = await common.fetchApiData(url, page++);
+        list.push(pageData);
+        return pageData;
     }
 
     const render = () => {
@@ -145,13 +162,10 @@ const timelineContent = await (async ($parent, url, profileData) => {
     }
 
     create();
-    // feedItem안에 프로필정보가 필요하여, timelineContent에서 받아서 단순전달
     return { $el, list, profileData }
-})(timeline.$el, timeline.url, timeline.profileData);
+};
 
-timelineContent.list.forEach(data => {
-    // feedItem 컴포넌트 단순추가, 별다른 특이사항은 없음
-    const feedItem = (($parent, profileData, data) => {
+    const FeedItem = ($parent, profileData, data) => {
         let $el;
 
         const create = () => {
@@ -225,7 +239,6 @@ timelineContent.list.forEach(data => {
     
         create();
         return { $el }
-    })(timelineContent.$el.firstElementChild, timelineContent.profileData, data);
-});
+    };
 
 })();
