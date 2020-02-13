@@ -228,28 +228,28 @@
       });
     };
 
+    const comparator = {
+      newButton: (x, y) => {
+        const a = x.timestamp.replace(/\s|\/|:/gi, '');
+        const b = y.timestamp.replace(/\s|\/|:/gi, '');
+        return b - a;
+      },
+      hotButton: (x, y) => {
+        const a = x.clipCount * 1 + x.commentCount * 2;
+        const b = y.clipCount * 1 + y.commentCount * 2;
+        return b - a;
+      }
+    };
+
     const sort = e => {
       $el.lastElementChild.firstElementChild.innerHTML = '';
       /* FIXME 불필요한 장대한 분기문입니다, 읽기도 힘들고 수정하기도 힘듭니다
       분기문은 예외적인 일부로직을 처리하는 데만 제한적으로 구조를 잡아주시고
       메인로직 자체를 분기문으로 감싸는 로직은 지양해주세요
       여기서는 sort 안에 들어가는 콜백 정도만 분기해도 충분할 것 같습니다 (수정완료) */
-      let comparator;
-      if (e.target.id === 'newButton') {
-        comparator = (x, y) => {
-            const a = x.timestamp.replace(/\s|\/|:/gi, '');
-            const b = y.timestamp.replace(/\s|\/|:/gi, '');
-            return b - a;
-          }
-      } else if (e.target.id === 'hotButton') {
-        comparator = (x, y) => {
-            const a = x.clipCount * 1 + x.commentCount * 2;
-            const b = y.clipCount * 1 + y.commentCount * 2;
-            return b - a;
-          }
-      }
-        
-        timelineList.sort(comparator);
+
+        // TODO 추가로, 이런 스타일의 로직은 이런 패턴으로 더 견고하게 리팩토링 할 수도 있습니다 (수정완료)
+        timelineList.sort(comparator[e.target.id]);
         const listList = divide(timelineList, ITEM_PER_ROW);
         listList.forEach(list => {
           const gridItem = (($parent, list) => {
