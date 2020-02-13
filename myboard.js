@@ -28,6 +28,7 @@
 
   const timeline = await (async $parent => {
     let $el;
+    // FIXME 데드코드
     let p = 1;
     const url =
       'https://my-json-server.typicode.com/it-crafts/lesson/timeline/';
@@ -230,6 +231,9 @@
   })(timelineContent.$el.firstElementChild);
 
   let p = 1;
+  /* FIXME showMoreItems메소드가 상당히 비대합니다, 적절한 역할에 따라 분리해주세요
+  divide가 내부에 있을 이유가 없고, API호출, 렌더링 등 로직 분리가 필요해 보입니다
+  아무리 크고 복잡한 서비스에서도 단일 메소드에 100줄 가까이 되는 경우는 드뭅니다 */
   const showMoreItems = async () => {
     const {more, loading} = grid;
     const {totalPage, url} = timeline;
@@ -298,6 +302,7 @@
 
         create();
 
+        // FIXME gridItem 내부에 들어와 있을만한 로직이 아닌 것 같습니다
         if (p === totalPage + 1) {
           more.parentElement.style.display = 'none';
           more.removeEventListener('click', showMoreItems);
@@ -308,6 +313,8 @@
       })(grid.$el.children[1].firstElementChild, list);
     });
   };
+  /* FIXME 사실, 비즈니스 로직을 담고있는 메소드가 리스너로도 사용되는 것은 바람직하지 않습니다
+  리스너는 순수하게 이벤트리스닝에 관련된 역할만 합니다, 역할에 따라 메소드를 분리해주세요 */
   showMoreItems();
   grid.more.addEventListener('click', showMoreItems);
 })();
