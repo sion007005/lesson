@@ -237,7 +237,7 @@ const Feed = ($parent, profileData = {}, pageDataList = []) => {
                     <div class="_97aPb">
                         <div role="button" tabindex="0" class="ZyFrc">
                             <div class="eLAPa kPFhm">
-                                <div class="KL4Bh" style="padding-bottom: 100%;"><img class="FFVAD" alt="${data.name}" src="${common.IMG_PATH}${data.img}" style="object-fit: cover;"></div>
+                                <div class="KL4Bh" style="padding-bottom: 100%;"><img class="FFVAD" alt="${data.name}" src="${common.IMG_PATH}/lazy${data.img}" data-src="${common.IMG_PATH}${data.img}" style="object-fit: cover;"></div>
                                 <div class="_9AhH0"></div>
                             </div>
                         </div>
