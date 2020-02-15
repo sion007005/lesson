@@ -194,14 +194,15 @@
       $el.lastElementChild.firstElementChild.innerHTML = '';
       const searchText = e.target.value;
       /* BUG text만 검색되고 name은 검색되지 않고 있습니다 (수정완료) */
-      const resultList = timelineList.filter(x => x.text.includes(searchText) || x.name.includes(searchText));
+      const resultList = timelineList.filter(
+        x => x.text.includes(searchText) || x.name.includes(searchText)
+      );
 
       divide(resultList, ITEM_PER_ROW).forEach(list => {
         let html = '';
         // COMMENT 왜 reduce 걷어내고 인덱스로 for문을 돌리신건가요?
         for (let i = 0; i < list.length; i++) {
           const img =
-            // BUG 변수값을 접근하는데 템플릿리터럴로 감싸서 부른 특별한 이유가 있을까요? (수정완료)
             (list[i].img || '') &&
             `
             <a href="javascript:;">
@@ -248,50 +249,50 @@
       메인로직 자체를 분기문으로 감싸는 로직은 지양해주세요
       여기서는 sort 안에 들어가는 콜백 정도만 분기해도 충분할 것 같습니다 (수정완료) */
 
-        // TODO 추가로, 이런 스타일의 로직은 이런 패턴으로 더 견고하게 리팩토링 할 수도 있습니다 (수정완료)
-        timelineList.sort(comparator[e.target.id]);
-        const listList = divide(timelineList, ITEM_PER_ROW);
-        listList.forEach(list => {
-          const gridItem = (($parent, list) => {
-            let $el;
+      // TODO 추가로, 이런 스타일의 로직은 이런 패턴으로 더 견고하게 리팩토링 할 수도 있습니다 (수정완료)
+      timelineList.sort(comparator[e.target.id]);
+      const listList = divide(timelineList, ITEM_PER_ROW);
+      listList.forEach(list => {
+        const gridItem = (($parent, list) => {
+          let $el;
 
-            const create = () => {
-              render(list);
-              $el = $parent.lastElementChild;
-            };
+          const create = () => {
+            render(list);
+            $el = $parent.lastElementChild;
+          };
 
-            const render = list => {
-              const html = list.reduce((html, data) => {
-                const img =
-                  (data.img || '') &&
-                  `
+          const render = list => {
+            const html = list.reduce((html, data) => {
+              const img =
+                (data.img || '') &&
+                `
                 <a href="javascript:;">
                 <div class="eLAPa">
                     <div class="KL4Bh"><img class="FFVAD" decoding="auto" src="${common.IMG_PATH}${data.img}" style="object-fit: cover;"></div>
                 </div>
             </a>
                 `;
-                html += `
+              html += `
               <div class="v1Nh3 kIKUG _bz0w">
                 ${img}
               </div>
               `;
-                return html;
-              }, '');
+              return html;
+            }, '');
 
-              $parent.insertAdjacentHTML(
-                'beforeend',
-                `
+            $parent.insertAdjacentHTML(
+              'beforeend',
+              `
                       <div class="Nnq7C weEfm">
                       ${html}
                       </div>
                   `
-              );
-            };
-            create();
-            return {$el};
-          })(grid.$el.lastElementChild.firstElementChild, list);
-        });
+            );
+          };
+          create();
+          return {$el};
+        })(grid.$el.lastElementChild.firstElementChild, list);
+      });
     };
 
     const render = () => {
