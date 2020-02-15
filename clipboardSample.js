@@ -154,6 +154,7 @@ const grid = await (async ($parent, url) => {
     const addEvent = () => {
         $el.firstElementChild.lastElementChild.querySelector('input')
             .addEventListener('keyup', keyup);
+        $el.firstElementChild.addEventListener('click', click);
     }
 
     const keyup = function(e) {
@@ -162,11 +163,29 @@ const grid = await (async ($parent, url) => {
         renderGridItem(divide(filter(timelineList), ITEM_PER_ROW));
     }
 
+    const click = function(e) {
+        const kind = e.target.dataset.kind;
+        if(!kind) {
+            return;
+        }
+        $el.lastElementChild.firstElementChild.innerHTML = '';
+        renderGridItem(divide(sort(kind), ITEM_PER_ROW));
+    }
+
     const filter = (list) => {
         if(!keyword) {
             return list;
         }
         return list.filter(i => (i.text + i.name).includes(keyword));
+    }
+
+    const comparator = {
+        popular: (a, b) => b.clipCount * 1 + b.commentCount * 2 - a.clipCount * 1 + a.commentCount * 2,
+        lastest: (a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp),
+    }
+    const sort = (kind) => {
+        timelineList.sort(comparator[kind]);
+        return filter(timelineList);
     }
 
     const divide = (list, size) => {
@@ -189,19 +208,12 @@ const grid = await (async ($parent, url) => {
     };
     const listList = divide(timelineList, ITEM_PER_ROW);
 
-    const sort = () => {
-        // TODO 최신순/인기순 클릭시 해당 정렬로직 수행
-        $el.lastElementChild.firstElementChild.innerHTML = '';
-        divide(timelineList.sort(/* TODO */), ITEM_PER_ROW)
-            .forEach(list => {/* TODO */});
-    }
-
     const render = () => {
         $parent.insertAdjacentHTML('beforeend', `
             <article class="FyNDV">
                 <div class="Igw0E rBNOH YBx95 ybXk5 _4EzTm soMvl JI_ht bkEs3 DhRcB">
-                    <button class="sqdOP L3NKy y3zKF JI_ht" type="button">최신순</button>
-                    <button class="sqdOP L3NKy y3zKF JI_ht" type="button">인기순</button>
+                    <button data-kind="lastest" class="sqdOP L3NKy y3zKF JI_ht" type="button">최신순</button>
+                    <button data-kind="popular" class="sqdOP L3NKy y3zKF JI_ht" type="button">인기순</button>
                     <h1 class="K3Sf1">
                         <div class="Igw0E rBNOH eGOV_ ybXk5 _4EzTm">
                             <div class="Igw0E IwRSH eGOV_ vwCYk">
