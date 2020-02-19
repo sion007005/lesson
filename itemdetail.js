@@ -37,15 +37,16 @@ const MoreComponent = (() => {
     }
     const proto = MoreComponent.prototype;
 
-    proto.proccess = async function() {
+    proto.more = async function() {
         this.beforeMore();
-        const hasNext = await this.more();
+        const hasNext = await this.ajaxMore();
         this.afterMore(hasNext);
     }
     proto.beforeMore = function() {
     }
     proto.afterMore = function(hasNext) {
     }
+    // 메소드 시그니처만 만들어두고, 자식 컴포넌트에서 오버라이드해서 쓴다
     proto.ajaxMore = function() {
         throw new Error('오버라이드 되지 않은 추상메소드 호출됨');
     }
@@ -55,20 +56,20 @@ const MoreComponent = (() => {
 
 const InfiniteComponent = (() => {
     const InfiniteComponent = function() {
-        MoreComponent.apply(this, arguments)
     }
+    // MoreComponent를 상속한다 (InfiniteComponent는 MoreComponent의 일종이다)
     InfiniteComponent.prototype = Object.create(MoreComponent.prototype);
     InfiniteComponent.prototype.constructor = InfiniteComponent;
     const proto = InfiniteComponent.prototype;
 
-    proto.proccess = function() {
+    proto.more = function() {
         this.beforeMore();
         const io = new IntersectionObserver((entryList, observer) => {
             entryList.forEach(async entry => {
                 if(!entry.isIntersecting) {
                     return;
                 }
-                const hasNext = await this.more();
+                const hasNext = await this.ajaxMore();
                 if(!hasNext) {
                     observer.unobserve(entry.target);
                     this.afterMore(hasNext);
@@ -85,25 +86,14 @@ const ItemDetail = (() => {
     const URL = 'https://my-json-server.typicode.com/it-crafts/lesson/detail/';
     const clickListener = {
         initInfinite() {
-            this.beforeMore();
-            const io = new IntersectionObserver((entryList, observer) => {
-                entryList.forEach(async entry => {
-                    if(!entry.isIntersecting) {
-                        return;
-                    }
-                    const hasNext = await this.ajaxMore();
-                    if(!hasNext) {
-                        observer.unobserve(entry.target);
-                        this.afterMore(hasNext);
-                    }
-                });
-            }, { rootMargin: innerHeight + 'px' });
-            io.observe(this.$loading);
+            // 런타임에 부모를 InfiniteComponent로 변경한다
+            Object.setPrototypeOf(Object.getPrototypeOf(this), InfiniteComponent.prototype);
+            // more 메소드를 부르면, 부모의 more 메소드를 부른다 (부모를 변경했으므로, 전체보기 로직)
+            this.more();
         },
-        async loadMore() {
-            this.beforeMore();
-            const hasNext = await this.ajaxMore();
-            this.afterMore(hasNext);
+        loadMore() {
+            // more 메소드를 부르면, 부모의 more 메소드를 부른다 (기본적으로 더보기 로직)
+            this.more();
         }
     }
 
@@ -121,6 +111,9 @@ const ItemDetail = (() => {
 
         this.$click;
     }
+    // 기본적으로 MoreComponent를 상속한다 (ItemDetail은 MoreComponent의 일종이다)
+    ItemDetail.prototype = Object.create(MoreComponent.prototype);
+    ItemDetail.prototype.constructor = ItemDetail;
     const proto = ItemDetail.prototype;
     
     proto.create = async function() {
@@ -135,6 +128,8 @@ const ItemDetail = (() => {
         this._item && this._item.destroy();
         this._detail && this._detail.destroy();
         this.removeEvent();
+        // 변경된(변경되지 않았더라도) 부모를 MoreComponent로 되돌린다
+        Object.setPrototypeOf(Object.getPrototypeOf(this), MoreComponent.prototype);
         this.$parent.removeChild(this.$el);
     }
 
