@@ -3,7 +3,7 @@
  * All rights reserved. 무단전재 및 재배포 금지.
  * All contents cannot be copied without permission.
  */
-const common = (() => {
+const common = (function() {
     const IMG_PATH = 'https://it-crafts.github.io/lesson/img';
     const fetchApiData = async (url, page = 'info') => {
         const res = await fetch(url + page);
@@ -14,115 +14,116 @@ const common = (() => {
     return { IMG_PATH, fetchApiData }
 })();
 
-const Root = (selector) => {
-    let $el;
-    let page;
+const Root = (() => {
+    const Root = function(selector) {
+        this.$el = document.querySelector(selector);
+        this._page;
+    };
+    const proto = Root.prototype;
 
-    const create = () => {
-        $el = document.querySelector(selector);
-        page = ItemDetail($el);
-        page.create();
+    proto.create = function() {
+        this._page = new ItemDetail(this.$el);
+        this._page.create();
+    }
+    proto.destroy = function() {
+        this._page && this._page.destroy();
     }
 
-    const destroy = () => {
-        page && page.destroy();
-    }
+    return Root;
+})();
 
-    return { create, destroy }
-};
-
-const ItemDetail = ($parent) => {
+const ItemDetail = (() => {
     const URL = 'https://my-json-server.typicode.com/it-crafts/lesson/detail/';
-
-    let $el;
-    let $loading;
-    let $more;
-
-    let item;
-    let detail;
-    
-    const data = {};
-
-    const create = async () => {
-        render();
-        $el = $parent.firstElementChild;
-        $loading = $el.querySelector('.js-loading');
-        $more = $el.querySelector('.js-more');
-        
-        const detailData = await fetch();
-        item = Item($el.firstElementChild, detailData, detailData.imgList, detailData.profile);
-        item.create();
-        detail = Detail($el.firstElementChild, detailData.detailList);
-        detail.create();
-
-        addEvent();
-    }
-
-    const destroy = () => {
-        item && item.destroy();
-        detail && detail.destroy();
-        removeEvent();
-        $parent.removeChild($el);
-    }
-
     const clickListener = {
-        initInfinite: () => {
-            beforeMore();
+        initInfinite() {
+            this.beforeMore();
             const io = new IntersectionObserver((entryList, observer) => {
                 entryList.forEach(async entry => {
                     if(!entry.isIntersecting) {
                         return;
                     }
-                    const hasNext = await more();
+                    const hasNext = await this.more();
                     if(!hasNext) {
                         observer.unobserve(entry.target);
-                        afterMore(hasNext);
+                        this.afterMore(hasNext);
                     }
                 });
             }, { rootMargin: innerHeight + 'px' });
-            io.observe($loading);
+            io.observe(this.$loading);
         },
-        loadMore: async () => {
-            beforeMore();
-            const hasNext = await more();
-            afterMore(hasNext);
+        async loadMore() {
+            this.beforeMore();
+            const hasNext = await this.more();
+            this.afterMore(hasNext);
         }
     }
-    const beforeMore = () => {
-        $more.style.display = 'none';
-        $loading.style.display = '';
+
+    const ItemDetail = function($parent) {
+        this.$parent = $parent;
+        this.render();
+        this.$el = $parent.firstElementChild;
+        this.$loading = this.$el.querySelector('.js-loading');
+        this.$more = this.$el.querySelector('.js-more');
+    
+        this._item;
+        this._detail;
+        
+        this._data = {};
+
+        this.$click;
     }
-    const more = async () => {
-        const { hasNext } = await detail.addImg();
+    const proto = ItemDetail.prototype;
+    
+    proto.create = async function() {
+        const detailData = await this.fetch();
+        this._item = new Item(this.$el.firstElementChild, detailData, detailData.imgList, detailData.profile);
+        this._item.create();
+        this._detail = new Detail(this.$el.firstElementChild, detailData.detailList);
+        this._detail.create();
+        this.addEvent();
+    }
+    proto.destroy = function() {
+        this._item && this._item.destroy();
+        this._detail && this._detail.destroy();
+        this.removeEvent();
+        this.$parent.removeChild(this.$el);
+    }
+
+    proto.beforeMore = function() {
+        this.$more.style.display = 'none';
+        this.$loading.style.display = '';
+    }
+    proto.more = async function() {
+        const { hasNext } = await this._detail.addImg();
         return hasNext;
     }
-    const afterMore = (hasNext) => {
-        $loading.style.display = 'none';
+    proto.afterMore = function(hasNext) {
+        this.$loading.style.display = 'none';
         if(hasNext) {
-            $more.style.display = '';
+            this.$more.style.display = '';
         }
     }
-    const click = (e) => {
+    proto.click = function(e) {
         const listener = e.target.dataset.listener;
-        clickListener[listener] && clickListener[listener]();
+        clickListener[listener] && clickListener[listener].call(this);
     }
 
-    const addEvent = () => {
-        $more.addEventListener('click', click);
+    proto.addEvent = function() {
+        this.$click = this.click.bind(this);
+        this.$more.addEventListener('click', this.$click);
+    }
+    proto.removeEvent = function() {
+        this.$more.removeEventListener('click', this.$click);
     }
 
-    const removeEvent = () => {
-        $more.removeEventListener('click', click);
-    }
-
-    const fetch = async () => {
+    proto.fetch = async function() {
         const detailData = await common.fetchApiData(URL, 1);
-        Object.assign(data, detailData);
+        Object.assign(this._data, detailData);
         return detailData;
     }
 
-    const render = () => {
-        $parent.innerHTML = `
+    proto.render = function() {
+        this.$parent.innerHTML = `
             <div class="_2z6nI">
                 <div style="flex-direction: column;">
                 </div>
@@ -137,24 +138,26 @@ const ItemDetail = ($parent) => {
         `;
     }
 
-    return { create, destroy }
-};
+    return ItemDetail;
+})();
 
-const Item = ($parent, detailData = {}, imgDataList = [], profileData = {}) => {
-    let $el;
-
-    const create = () => {
-        render(detailData, imgDataList, profileData, innerWidth);
-        $el = $parent.firstElementChild;
+const Item = (() => {
+    const Item = function($parent, detailData = {}, imgDataList = [], profileData = {}) {
+        this.$parent = $parent;
+        this.render(detailData, imgDataList, profileData, innerWidth);
+        this.$el = this.$parent.firstElementChild;
+    }
+    const proto = Item.prototype;
+    
+    proto.create = function() {
+    }
+    proto.destroy = function() {
+        this.$parent.removeChild(this.$el);
     }
 
-    const destroy = () => {
-        $parent.removeChild($el);
-    }
-
-    const render = (data, imgDataList, profileData, width) => {
+    proto.render = function(data, imgDataList, profileData, width) {
         const imgs = imgDataList.reduce((html, img) => {
-            html += /* html */`
+            html += `
                 <li class="_-1_m6" style="opacity: 1; width: ${width}px;">
                     <div class="bsGjF" style="margin-left: 0px; width: ${width}px;">
                         <div class="Igw0E IwRSH eGOV_ _4EzTm" style="width: ${width}px;">
@@ -175,13 +178,13 @@ const Item = ($parent, detailData = {}, imgDataList = [], profileData = {}) => {
 
         const navs = imgDataList.reduce((html, img, index) => {
             const on = index === 0 ? 'XCodT' : '';
-            html += /* html */`
+            html += `
                 <div class="Yi5aA ${on}"></div>
             `;
             return html;
         }, '');
 
-        $parent.insertAdjacentHTML('afterbegin', /* html */`
+        this.$parent.insertAdjacentHTML('afterbegin', `
             <article class="QBXjJ M9sTE h0YNM SgTZ1 Tgarh">
                 <header class="Ppjfr UE9AK wdOqh">
                     <div class="RR-M- h5uC0 mrq0Z" role="button" tabindex="0">
@@ -265,49 +268,52 @@ const Item = ($parent, detailData = {}, imgDataList = [], profileData = {}) => {
         `);
     }
 
-    return { create, destroy }
-};
+    return Item;
+})();
 
-const Detail = ($parent, detailDataList = []) => {
-    const $elList = [];
+const Detail = (() => {
+    const Detail = function($parent, detailDataList = []) {
+        this.$parent = $parent;
+        this._dataListTemp = detailDataList;
+        this.$elList = [];
+        this._dataList = [];
+    };
+    const proto = Detail.prototype;
 
-    const dataList = [];
-
-    const create = () => {
+    proto.create = function() {
+    }
+    proto.destroy = function() {
+        this.$elList.forEach($el => this.$parent.removeChild($el));
     }
 
-    const addImg = () => {
+    proto.addImg = function() {
         return new Promise(resolve => {
-            const detailData = detailDataList.shift();
+            const detailData = this._dataListTemp.shift();
             if(!detailData) {
                 resolve({ hasNext: false });
             }
 
-            render(detailData);
-            const $el = $parent.lastElementChild;
-            $elList.push($el);
-            dataList.push(detailData);
+            this.render(detailData);
+            const $el = this.$parent.lastElementChild;
+            this.$elList.push($el);
+            this._dataList.push(detailData);
 
             $el.querySelector('img').onload = (e) => {
-                resolve({ hasNext: detailDataList.length > 0 });
+                resolve({ hasNext: this._dataListTemp.length > 0 });
             }
         });
     }
 
-    const destroy = () => {
-        $elList.forEach($el => $parent.removeChild($el));
-    }
-
-    const render = (img) => {
-        $parent.insertAdjacentHTML('beforeend', /* html */`
+    proto.render = function(img) {
+        this.$parent.insertAdjacentHTML('beforeend', `
             <article class="M9sTE h0YNM SgTZ1">
                 <img style="width: 100%; height: auto;" src="${common.IMG_PATH}${img}">
             </article>
         `);
     }
 
-    return { create, destroy, addImg }
-};
+    return Detail;
+})();
 
-const root = Root('main');
+const root = new Root('main');
 root.create();
