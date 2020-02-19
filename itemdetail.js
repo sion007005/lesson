@@ -45,8 +45,8 @@ const ItemDetail = ($parent) => {
         const detailData = await fetch();
         $item = Item($el.firstElementChild, detailData, detailData.imgList, detailData.profile);
         $item.create();
-        // $detail = Detail($el.firstElementChild, detailData.detailList);
-        // $detail.create();
+        $detail = Detail($el.firstElementChild, detailData.detailList);
+        $detail.create();
     }
 
     const destroy = () => {
@@ -63,10 +63,17 @@ const ItemDetail = ($parent) => {
 
     const render = () => {
         $parent.innerHTML = `
-            <div class="Kj7h1">
-                <div class="ltEKP">
-                </div>
+        <div class="_2z6nI">
+            <div style="flex-direction: column;">
             </div>
+            <div class="js-loading _4emnV">
+                <div class="Igw0E IwRSH YBx95 _4EzTm _9qQ0O ZUqME" style="height: 32px; width: 32px;"><svg aria-label="읽어들이는 중..." class="By4nA" viewBox="0 0 100 100"><rect fill="#555555" height="6" opacity="0" rx="3" ry="3" transform="rotate(-90 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.08333333333333333" rx="3" ry="3" transform="rotate(-60 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.16666666666666666" rx="3" ry="3" transform="rotate(-30 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.25" rx="3" ry="3" transform="rotate(0 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.3333333333333333" rx="3" ry="3" transform="rotate(30 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.4166666666666667" rx="3" ry="3" transform="rotate(60 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.5" rx="3" ry="3" transform="rotate(90 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.5833333333333334" rx="3" ry="3" transform="rotate(120 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.6666666666666666" rx="3" ry="3" transform="rotate(150 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.75" rx="3" ry="3" transform="rotate(180 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.8333333333333334" rx="3" ry="3" transform="rotate(210 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.9166666666666666" rx="3" ry="3" transform="rotate(240 50 50)" width="25" x="72" y="47"></rect></svg></div>
+            </div>
+            <div class="js-more Igw0E rBNOH YBx95 ybXk5 _4EzTm soMvl" style="margin-right: 8px;">
+                <button class="sqdOP L3NKy y3zKF _4pI4F" type="button" style="margin: 16px 8px">더보기</button>
+                <button class="sqdOP L3NKy y3zKF _4pI4F" type="button" style="margin: 16px 8px">전체보기</button>
+            </div>
+        </div>
         `;
     }
 
@@ -199,6 +206,37 @@ const Item = ($parent, detailData = {}, imgDataList = [], profileData = {}) => {
     }
 
     return { $el, create, destroy }
+};
+
+const Detail = ($parent, detailDataList = []) => {
+    const $elList = [];
+    const dataList = [];
+
+    const create = () => {
+        addImg();
+    }
+
+    const addImg = () => {
+        const detailData = detailDataList.shift();
+        render(detailData);
+        $elList.push($parent.lastElementChild);
+        dataList.push(detailData);
+        return { hasNext: detailDataList.length > 0 };
+    }
+
+    const destroy = () => {
+        $elList.forEach($el => $parent.removeChild($el));
+    }
+
+    const render = (img) => {
+        $parent.insertAdjacentHTML('beforeend', /* html */`
+            <article class="M9sTE h0YNM SgTZ1">
+                <img style="width: 100%; height: auto;" src="${common.IMG_PATH}${img}">
+            </article>
+        `);
+    }
+
+    return { $elList, create, destroy }
 };
 
 const root = Root('main');
