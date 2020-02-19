@@ -67,32 +67,39 @@ const ItemDetail = ($parent) => {
 
     const clickListener = {
         initInfinite: () => {
-            $more.style.display = 'none';
-            $loading.style.display = '';
+            beforeMore();
             const io = new IntersectionObserver((entryList, observer) => {
                 entryList.forEach(async entry => {
                     if(!entry.isIntersecting) {
                         return;
                     }
-                    // onload를 addImg 내부로 넣어주고, 비동기 함수로 변경
-                    const { hasNext } = await detail.addImg();
+                    const hasNext = await more();
                     if(!hasNext) {
                         observer.unobserve(entry.target);
-                        $loading.style.display = 'none';
+                        afterMore(hasNext);
                     }
                 });
             }, { rootMargin: innerHeight + 'px' });
             io.observe($loading);
         },
         loadMore: async () => {
-            $more.style.display = 'none';
-            $loading.style.display = '';
-            // onload를 addImg 내부로 넣어주고, 비동기 함수로 변경
-            const { hasNext } = await detail.addImg();
-            if(hasNext) {
-                $more.style.display = '';
-            }
-            $loading.style.display = 'none';
+            beforeMore();
+            const hasNext = await more();
+            afterMore(hasNext);
+        }
+    }
+    const beforeMore = () => {
+        $more.style.display = 'none';
+        $loading.style.display = '';
+    }
+    const more = async () => {
+        const { hasNext } = await detail.addImg();
+        return hasNext;
+    }
+    const afterMore = (hasNext) => {
+        $loading.style.display = 'none';
+        if(hasNext) {
+            $more.style.display = '';
         }
     }
     const click = (e) => {
@@ -270,11 +277,9 @@ const Detail = ($parent, detailDataList = []) => {
     }
 
     const addImg = () => {
-        // addImg 호출시 프로미스 강제생성
         return new Promise(resolve => {
             const detailData = detailDataList.shift();
             if(!detailData) {
-                // 예외케이스엔 false를 리턴하고 튕겨준다
                 resolve({ hasNext: false });
             }
 
@@ -284,7 +289,6 @@ const Detail = ($parent, detailDataList = []) => {
             dataList.push(detailData);
 
             $el.querySelector('img').onload = (e) => {
-                // 이미지 로드가 완료되면, 더보기 가능여부를 넘겨준다
                 resolve({ hasNext: detailDataList.length > 0 });
             }
         });
