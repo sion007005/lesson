@@ -32,6 +32,55 @@ const Root = (() => {
     return Root;
 })();
 
+const MoreComponent = (() => {
+    const MoreComponent = function() {
+    }
+    const proto = MoreComponent.prototype;
+
+    proto.proccess = async function() {
+        this.beforeMore();
+        const hasNext = await this.more();
+        this.afterMore(hasNext);
+    }
+    proto.beforeMore = function() {
+    }
+    proto.afterMore = function(hasNext) {
+    }
+    proto.ajaxMore = function() {
+        throw new Error('오버라이드 되지 않은 추상메소드 호출됨');
+    }
+
+    return MoreComponent;
+})();
+
+const InfiniteComponent = (() => {
+    const InfiniteComponent = function() {
+        MoreComponent.apply(this, arguments)
+    }
+    InfiniteComponent.prototype = Object.create(MoreComponent.prototype);
+    InfiniteComponent.prototype.constructor = InfiniteComponent;
+    const proto = InfiniteComponent.prototype;
+
+    proto.proccess = function() {
+        this.beforeMore();
+        const io = new IntersectionObserver((entryList, observer) => {
+            entryList.forEach(async entry => {
+                if(!entry.isIntersecting) {
+                    return;
+                }
+                const hasNext = await this.more();
+                if(!hasNext) {
+                    observer.unobserve(entry.target);
+                    this.afterMore(hasNext);
+                }
+            });
+        }, { rootMargin: innerHeight + 'px' });
+        io.observe(this.$loading);
+    }
+
+    return InfiniteComponent;
+})();
+
 const ItemDetail = (() => {
     const URL = 'https://my-json-server.typicode.com/it-crafts/lesson/detail/';
     const clickListener = {
@@ -42,7 +91,7 @@ const ItemDetail = (() => {
                     if(!entry.isIntersecting) {
                         return;
                     }
-                    const hasNext = await this.more();
+                    const hasNext = await this.ajaxMore();
                     if(!hasNext) {
                         observer.unobserve(entry.target);
                         this.afterMore(hasNext);
@@ -53,7 +102,7 @@ const ItemDetail = (() => {
         },
         async loadMore() {
             this.beforeMore();
-            const hasNext = await this.more();
+            const hasNext = await this.ajaxMore();
             this.afterMore(hasNext);
         }
     }
@@ -93,7 +142,7 @@ const ItemDetail = (() => {
         this.$more.style.display = 'none';
         this.$loading.style.display = '';
     }
-    proto.more = async function() {
+    proto.ajaxMore = async function() {
         const { hasNext } = await this._detail.addImg();
         return hasNext;
     }
