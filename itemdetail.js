@@ -46,7 +46,6 @@ const MoreComponent = (() => {
     }
     proto.afterMore = function(hasNext) {
     }
-    // 메소드 시그니처만 만들어두고, 자식 컴포넌트에서 오버라이드해서 쓴다
     proto.ajaxMore = function() {
         throw new Error('오버라이드 되지 않은 추상메소드 호출됨');
     }
@@ -57,7 +56,6 @@ const MoreComponent = (() => {
 const InfiniteComponent = (() => {
     const InfiniteComponent = function() {
     }
-    // MoreComponent를 상속한다 (InfiniteComponent는 MoreComponent의 일종이다)
     InfiniteComponent.prototype = Object.create(MoreComponent.prototype);
     InfiniteComponent.prototype.constructor = InfiniteComponent;
     const proto = InfiniteComponent.prototype;
@@ -86,13 +84,10 @@ const ItemDetail = (() => {
     const URL = 'https://my-json-server.typicode.com/it-crafts/lesson/detail/';
     const clickListener = {
         initInfinite() {
-            // 런타임에 부모를 InfiniteComponent로 변경한다
             Object.setPrototypeOf(Object.getPrototypeOf(this), InfiniteComponent.prototype);
-            // more 메소드를 부르면, 부모의 more 메소드를 부른다 (부모를 변경했으므로, 전체보기 로직)
             this.more();
         },
         loadMore() {
-            // more 메소드를 부르면, 부모의 more 메소드를 부른다 (기본적으로 더보기 로직)
             this.more();
         }
     }
@@ -111,7 +106,6 @@ const ItemDetail = (() => {
 
         this.$click;
     }
-    // 기본적으로 MoreComponent를 상속한다 (ItemDetail은 MoreComponent의 일종이다)
     ItemDetail.prototype = Object.create(MoreComponent.prototype);
     ItemDetail.prototype.constructor = ItemDetail;
     const proto = ItemDetail.prototype;
@@ -128,7 +122,6 @@ const ItemDetail = (() => {
         this._item && this._item.destroy();
         this._detail && this._detail.destroy();
         this.removeEvent();
-        // 변경된(변경되지 않았더라도) 부모를 MoreComponent로 되돌린다
         Object.setPrototypeOf(Object.getPrototypeOf(this), MoreComponent.prototype);
         this.$parent.removeChild(this.$el);
     }
@@ -188,8 +181,14 @@ const ItemDetail = (() => {
 const Item = (() => {
     const Item = function($parent, detailData = {}, imgDataList = [], profileData = {}) {
         this.$parent = $parent;
-        this.render(detailData, imgDataList, profileData, innerWidth);
+        this._dataList = imgDataList;
+        this.render(detailData, profileData);
         this.$el = this.$parent.firstElementChild;
+        this.$slider = this.$el.querySelector('.js-slider');
+        this.$sliderList = this.$slider.querySelector('ul');
+        this.$left = this.$el.querySelector('.js-left');
+        this.$right = this.$el.querySelector('.js-right');
+        this.$pagebar = this.$el.querySelector('.js-pagebar');
     }
     const proto = Item.prototype;
     
@@ -199,12 +198,30 @@ const Item = (() => {
         this.$parent.removeChild(this.$el);
     }
 
-    proto.render = function(data, imgDataList, profileData, width) {
+    proto.click = function() {
+        // TODO $left/$right 화살표 숨김/표시 (필요한 로직 추가)
+        // TODO this.$slider.style.transform = `translateX(${이동좌표}px)`;
+        // TODO $pagebar 이미지에 대응되는 엘리먼트로 XCodT 클래스 이동 (on 처리)
+        // TODO 가로사이즈는 innerWidth로 직접 잡거나, innerWidth를 캐싱해두고 사용
+    }
+    proto.resize = function() {
+        // HACK 현재 데이터바인딩을 지원하지 않으므로, 리스트 모든 엘리먼트 지우고 새로 렌더링
+        while(this.$sliderList.firstChild) {
+            this.$sliderList.removeChild(this.$sliderList.firstChild);
+        }
+        this.$sliderList.insertAdjacentHTML('beforeend', `
+            ${this.htmlSliderImgs(this._dataList)}
+        `);
+        // TODO 리프레시 전 슬라이드 이미지 다시 노출 (좌표보정)
+        // TODO 가로사이즈는 innerWidth로 직접 잡거나, innerWidth를 캐싱해두고 사용
+    }
+
+    proto.htmlSliderImgs = function(imgDataList) {
         const imgs = imgDataList.reduce((html, img) => {
             html += `
-                <li class="_-1_m6" style="opacity: 1; width: ${width}px;">
-                    <div class="bsGjF" style="margin-left: 0px; width: ${width}px;">
-                        <div class="Igw0E IwRSH eGOV_ _4EzTm" style="width: ${width}px;">
+                <li class="_-1_m6" style="opacity: 1; width: ${innerWidth}px;">
+                    <div class="bsGjF" style="margin-left: 0px; width: ${innerWidth}px;">
+                        <div class="Igw0E IwRSH eGOV_ _4EzTm" style="width: ${innerWidth}px;">
                             <div role="button" tabindex="0" class="ZyFrc">
                                 <div class="eLAPa RzuR0">
                                     <div class="KL4Bh" style="padding-bottom: 100%;">
@@ -219,15 +236,16 @@ const Item = (() => {
             `;
             return html;
         }, '');
-
-        const navs = imgDataList.reduce((html, img, index) => {
+        return imgs;
+    }
+    proto.render = function(data, profileData) {
+        const navs = this._dataList.reduce((html, img, index) => {
             const on = index === 0 ? 'XCodT' : '';
             html += `
                 <div class="Yi5aA ${on}"></div>
             `;
             return html;
         }, '');
-
         this.$parent.insertAdjacentHTML('afterbegin', `
             <article class="QBXjJ M9sTE h0YNM SgTZ1 Tgarh">
                 <header class="Ppjfr UE9AK wdOqh">
@@ -251,15 +269,15 @@ const Item = (() => {
                                         <div class="js-slider MreMs" tabindex="0" style="transition-duration: 0.25s; transform: translateX(0px);">
                                             <div class="qqm6D">
                                                 <ul class="YlNGR" style="padding-left: 0px; padding-right: 0px;">
-                                                    ${imgs}
+                                                    ${this.htmlSliderImgs(this._dataList)}
                                                 </ul>
                                             </div>
                                         </div>
                                     </div>
-                                    <button class="POSa_" tabindex="-1">
+                                    <button class="js-left POSa_" tabindex="-1">
                                         <div class="coreSpriteLeftChevron"></div>
                                     </button>
-                                    <button class="_6CZji" tabindex="-1">
+                                    <button class="js-right _6CZji" tabindex="-1">
                                         <div class="coreSpriteRightChevron"></div>
                                     </button>
                                 </div>
