@@ -32,42 +32,50 @@ const Root = (() => {
     return Root;
 })();
 
-const MoreComponent = (() => {
-    const MoreComponent = function() {
+// 이제부터 PageTurner는 이제 추상클래스가 아니라, 원본 컴포넌트의 역할을 보조해주는 독립적인 객체이다
+const PageTurner = (() => {
+    const PageTurner = function($loading, $more) {
+        this.$loading = $loading;
+        this.$more = $more;
     }
-    const proto = MoreComponent.prototype;
+    const proto = PageTurner.prototype;
 
-    proto.more = async function() {
+    proto.more = async function(ajaxMore) {
         this.beforeMore();
-        const hasNext = await this.ajaxMore();
+        const hasNext = await ajaxMore();
         this.afterMore(hasNext);
     }
     proto.beforeMore = function() {
+        this.$more.style.display = 'none';
+        this.$loading.style.display = '';
     }
     proto.afterMore = function(hasNext) {
-    }
-    proto.ajaxMore = function() {
-        throw new Error('오버라이드 되지 않은 추상메소드 호출됨');
+        this.$loading.style.display = 'none';
+        if(hasNext) {
+            this.$more.style.display = '';
+        }
     }
 
-    return MoreComponent;
+    return PageTurner;
 })();
 
-const InfiniteComponent = (() => {
-    const InfiniteComponent = function() {
+const AutoPageTurner = (() => {
+    const AutoPageTurner = function($loading, $more) {
+        PageTurner.call(this, $loading, $more);
     }
-    InfiniteComponent.prototype = Object.create(MoreComponent.prototype);
-    InfiniteComponent.prototype.constructor = InfiniteComponent;
-    const proto = InfiniteComponent.prototype;
+    AutoPageTurner.prototype = Object.create(PageTurner.prototype);
+    AutoPageTurner.prototype.constructor = AutoPageTurner;
+    const proto = AutoPageTurner.prototype;
 
-    proto.more = function() {
+    // PageTurner의 more 메소드가 오버라이드 됨
+    proto.more = function(ajaxMore) {
         this.beforeMore();
         const io = new IntersectionObserver((entryList, observer) => {
             entryList.forEach(async entry => {
                 if(!entry.isIntersecting) {
                     return;
                 }
-                const hasNext = await this.ajaxMore();
+                const hasNext = await ajaxMore();
                 if(!hasNext) {
                     observer.unobserve(entry.target);
                     this.afterMore(hasNext);
@@ -77,20 +85,11 @@ const InfiniteComponent = (() => {
         io.observe(this.$loading);
     }
 
-    return InfiniteComponent;
+    return AutoPageTurner;
 })();
 
 const ItemDetail = (() => {
     const URL = 'https://my-json-server.typicode.com/it-crafts/lesson/detail/';
-    const clickListener = {
-        initInfinite() {
-            Object.setPrototypeOf(Object.getPrototypeOf(this), InfiniteComponent.prototype);
-            this.more();
-        },
-        loadMore() {
-            this.more();
-        }
-    }
 
     const ItemDetail = function($parent) {
         this.$parent = $parent;
@@ -98,51 +97,46 @@ const ItemDetail = (() => {
         this.$el = $parent.firstElementChild;
         this.$loading = this.$el.querySelector('.js-loading');
         this.$more = this.$el.querySelector('.js-more');
-    
+
         this._item;
         this._detail;
-        
+        this._pageTurner;
+
         this._data = {};
 
         this.$click;
     }
-    ItemDetail.prototype = Object.create(MoreComponent.prototype);
-    ItemDetail.prototype.constructor = ItemDetail;
     const proto = ItemDetail.prototype;
-    
+
     proto.create = async function() {
         const detailData = await this.fetch();
         this._item = new Item(this.$el.firstElementChild, detailData, detailData.imgList, detailData.profile);
         this._item.create();
         this._detail = new Detail(this.$el.firstElementChild, detailData.detailList);
         this._detail.create();
+        // ItemDetail이 PageTurner를 상속하는 게 아닌, 내부에 부하로 생성하고 일을 대신 시키기만 한다 (악보랑 악보대를 알려준다)
+        this._pageTurner = new PageTurner(this.$loading, this.$more);
         this.addEvent();
     }
     proto.destroy = function() {
         this._item && this._item.destroy();
         this._detail && this._detail.destroy();
         this.removeEvent();
-        Object.setPrototypeOf(Object.getPrototypeOf(this), MoreComponent.prototype);
         this.$parent.removeChild(this.$el);
     }
 
-    proto.beforeMore = function() {
-        this.$more.style.display = 'none';
-        this.$loading.style.display = '';
-    }
-    proto.ajaxMore = async function() {
-        const { hasNext } = await this._detail.addImg();
-        return hasNext;
-    }
-    proto.afterMore = function(hasNext) {
-        this.$loading.style.display = 'none';
-        if(hasNext) {
-            this.$more.style.display = '';
-        }
-    }
     proto.click = function(e) {
         const listener = e.target.dataset.listener;
-        clickListener[listener] && clickListener[listener].call(this);
+        if(listener === 'infinite') {
+            // 런타임 부모 강제변경 - 이런 행위는 JS에서만 가능하며, 바람직하진 않으나 강력하다
+            Object.setPrototypeOf(this._pageTurner, AutoPageTurner.prototype);
+        }
+
+        // 부하인 PageTurner 객체에게 "이거해" 라고 콜백을 넘겨준다 - 그럼 콜백 앞뒤의 일은 PageTurner가 알아서 한다
+        this._pageTurner.more(async () => {
+            const { hasNext } = await this._detail.addImg();
+            return hasNext;
+        });
     }
 
     proto.addEvent = function() {
@@ -165,8 +159,8 @@ const ItemDetail = (() => {
                 <div style="flex-direction: column;">
                 </div>
                 <div class="js-more Igw0E rBNOH YBx95 ybXk5 _4EzTm soMvl" style="margin-right: 8px;">
-                    <button data-listener="loadMore" class="sqdOP L3NKy y3zKF _4pI4F" type="button" style="margin: 16px 8px">더보기</button>
-                    <button data-listener="initInfinite" class="sqdOP L3NKy y3zKF _4pI4F" type="button" style="margin: 16px 8px">전체보기</button>
+                    <button data-listener="more" class="sqdOP L3NKy y3zKF _4pI4F" type="button" style="margin: 16px 8px">더보기</button>
+                    <button data-listener="infinite" class="sqdOP L3NKy y3zKF _4pI4F" type="button" style="margin: 16px 8px">전체보기</button>
                 </div>
                 <div class="js-loading _4emnV" style="display: none;">
                     <div class="Igw0E IwRSH YBx95 _4EzTm _9qQ0O ZUqME" style="height: 32px; width: 32px;"><svg aria-label="읽어들이는 중..." class="By4nA" viewBox="0 0 100 100"><rect fill="#555555" height="6" opacity="0" rx="3" ry="3" transform="rotate(-90 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.08333333333333333" rx="3" ry="3" transform="rotate(-60 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.16666666666666666" rx="3" ry="3" transform="rotate(-30 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.25" rx="3" ry="3" transform="rotate(0 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.3333333333333333" rx="3" ry="3" transform="rotate(30 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.4166666666666667" rx="3" ry="3" transform="rotate(60 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.5" rx="3" ry="3" transform="rotate(90 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.5833333333333334" rx="3" ry="3" transform="rotate(120 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.6666666666666666" rx="3" ry="3" transform="rotate(150 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.75" rx="3" ry="3" transform="rotate(180 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.8333333333333334" rx="3" ry="3" transform="rotate(210 50 50)" width="25" x="72" y="47"></rect><rect fill="#555555" height="6" opacity="0.9166666666666666" rx="3" ry="3" transform="rotate(240 50 50)" width="25" x="72" y="47"></rect></svg></div>
@@ -191,7 +185,7 @@ const Item = (() => {
         this.$pagebar = this.$el.querySelector('.js-pagebar');
     }
     const proto = Item.prototype;
-    
+
     proto.create = function() {
     }
     proto.destroy = function() {
