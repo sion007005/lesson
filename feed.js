@@ -200,7 +200,7 @@ const TimelineContent = (
           observer.unobserve(entry.target);
           $loading.style.display = 'none';
         }
-      }); // rootMargin 미동작 (인스타그램에서 자체적으로 막아놓은 것 같기도 함)
+      });
     });
     io.observe($loading);
   };
@@ -233,11 +233,11 @@ const Feed = (
   $parent,
   profileData = {},
   pageDataList = [],
-  page,
-  totalPage
+//   page,
+//   totalPage
 ) => {
   const $elList = [];
-  const elImgList = [];
+//   const elImgList = [];
 
   const create = () => {
     addFeedItems(profileData, pageDataList);
@@ -254,31 +254,49 @@ const Feed = (
 
     $elList.push(...[].slice.call($parent.children, firstIndex));
     addedElList.push(...[].slice.call($elList, firstIndex));
-    addedElList.forEach(x => elImgList.push(x.children[1]));
-    showImages();
+    // addedElList.forEach(x => elImgList.push(x.children[1]));
+    showImages(addedElList);
   };
 
-  const showImages = () => {
+  const showImages = (addedElList) => {
+    /* TODO 현재는 페이지수 만큼 io객체가 생성되고 있습니다, 만약 10페이지, 100페이지, ... 가 있다면 그 만큼 생성됩니다
+    로직상 Feed는 List를 담는 컴포넌트이기 때문에, 사실 io는 하나만 있으면 충분합니다
+    io 생성은 컴포넌트 레벨로 올리고, observe하는 로직만 반복되면 성능이 개선될 수 있을 것 같습니다 */
     const io = new IntersectionObserver(
       (entryList, observer) => {
         entryList.forEach(async entry => {
           if (!entry.isIntersecting) {
             return;
           }
-          await changeImg(entry);
-          if (page >= totalPage) {
+          /* COMMENT 비즈니스 로직이 메소드로 잘 분리되었습니다 (잘 하셨어요)
+          현재는 비동기 함수가 아니므로, await를 제거하면 더 좋을 것 같습니다
+          그리고 entry.target를 넘겨주면 더 권한이 명확해질 것 같아요 */
+          /*await*/ changeImg(entry);
+          /* BUG page와 totalPage가 항상 undefined 입니다
+          그리고 여기서 page나 totalPage를 체크할 이유도 없습니다 */
+          // if (page >= totalPage) {
             observer.unobserve(entry.target);
-          }
+          // }
         });
       },
       {rootMargin: '-60px'}
     );
-    elImgList.forEach(image => io.observe(image));
+    /* BUG 추가한 이미지만 뽑으려던 것 같으나, 실제로는 elImgList에 전체 이미지(이전 페이지 포함) 들어 있습니다
+    2페이지, 3페이지, ... addFeedItems 호출 시에 이전페이지 이미지들이 다시 옵저버에 등록됩니다
+    겸사겸사 delete aLazyImg.dataset.src; 추가했으니, 끝까지 내렸다가 다시 올려보세요
+    그리고, 객체가 자체적으로 들고있는 속성의 사용은 정말 필요할 때만 제한적으로 사용해야 합니다
+    지금 이 코드에서도 보시면 아시겠지만, 속성값에 뭐가 들어있을 지 예측하고 추적하는 건 쉽지 않습니다
+    가능한 한 함수는 순수하게 사용하는 방향으로 설계 해주세요 (필요한 데이터는 파라미터로 받도록) */
+    addedElList.forEach(image => io.observe(image));
+    // elImgList.forEach(image => io.observe(image));
   };
 
   const changeImg = entry => {
-    const aLazyImg = entry.target.querySelector('img');
+    /* COMMENT 현재 로직에 가장 심플하고 정확한 선택자입니다 (잘 하셨어요)
+    img[data-src]로 하면 조금 더 견고해질 것 같아요! */
+    const aLazyImg = entry.target.querySelector('img[data-src]');
     aLazyImg.src = aLazyImg.dataset.src;
+    delete aLazyImg.dataset.src;
   };
 
   const render = (profileData, pageDataList) => {
