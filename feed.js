@@ -258,7 +258,11 @@ const Feed = (
     showImages(addedElList);
   };
 
+  const showImages = addedElList => {
     /* TODO 현재는 페이지수 만큼 io객체가 생성되고 있습니다, 만약 10페이지, 100페이지, ... 가 있다면 그 만큼 생성됩니다
+    로직상 Feed는 List를 담는 컴포넌트이기 때문에, 사실 io는 하나만 있으면 충분합니다
+    io 생성은 컴포넌트 레벨로 올리고, observe하는 로직만 반복되면 성능이 개선될 수 있을 것 같습니다 */
+    const io = new IntersectionObserver(
       (entryList, observer) => {
         entryList.forEach(async entry => {
           if (!entry.isIntersecting) {
@@ -271,7 +275,7 @@ const Feed = (
           /* BUG page와 totalPage가 항상 undefined 입니다
           그리고 여기서 page나 totalPage를 체크할 이유도 없습니다 */
           // if (page >= totalPage) {
-            observer.unobserve(entry.target);
+          observer.unobserve(entry.target);
           // }
         });
       },
