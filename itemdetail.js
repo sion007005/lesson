@@ -32,7 +32,6 @@ const Root = (() => {
 	return Root;
 })();
 
-// 이제부터 PageTurner는 이제 추상클래스가 아니라, 원본 컴포넌트의 역할을 보조해주는 독립적인 객체이다
 const PageTurner = (() => {
 	const PageTurner = function($loading, $more) {
 		this.$loading = $loading;
@@ -67,7 +66,6 @@ const AutoPageTurner = (() => {
 	AutoPageTurner.prototype.constructor = AutoPageTurner;
 	const proto = AutoPageTurner.prototype;
 
-	// PageTurner의 more 메소드가 오버라이드 됨
 	proto.more = function(ajaxMore) {
 		this.beforeMore();
 		const io = new IntersectionObserver(
@@ -117,7 +115,6 @@ const ItemDetail = (() => {
 		this._item.create();
 		this._detail = new Detail(this.$el.firstElementChild, detailData.detailList);
 		this._detail.create();
-		// ItemDetail이 PageTurner를 상속하는 게 아닌, 내부에 부하로 생성하고 일을 대신 시키기만 한다 (악보랑 악보대를 알려준다)
 		this._pageTurner = new PageTurner(this.$loading, this.$more);
 		this.addEvent();
 	};
@@ -131,11 +128,9 @@ const ItemDetail = (() => {
 	proto.click = function(e) {
 		const listener = e.target.dataset.listener;
 		if (listener === 'infinite') {
-			// 런타임 부모 강제변경 - 이런 행위는 JS에서만 가능하며, 바람직하진 않으나 강력하다
 			Object.setPrototypeOf(this._pageTurner, AutoPageTurner.prototype);
 		}
 
-		// 부하인 PageTurner 객체에게 "이거해" 라고 콜백을 넘겨준다 - 그럼 콜백 앞뒤의 일은 PageTurner가 알아서 한다
 		this._pageTurner.more(async () => {
 			const {hasNext} = await this._detail.addImg();
 			return hasNext;
@@ -187,7 +182,9 @@ const Item = (() => {
 		this.$right = this.$el.querySelector('.js-right');
 		this.$pagebar = this.$el.querySelector('.js-pagebar');
 		this.directionButtons = Array.from(this.$el.children[1].querySelectorAll('button'));
+		// this.myImg = this.$sliderList.firstElementChild.querySelector('img');
 		this.imgIndex = 0;
+		this.resizeEvent;
 	};
 	const proto = Item.prototype;
 
@@ -196,6 +193,8 @@ const Item = (() => {
 		if (this.imgIndex === 0) {
 			this.$left.style.display = 'none';
 		}
+		this.resizeEvent = this.resize.bind(this);
+		window.addEventListener('resize', this.resizeEvent);
 	};
 	proto.destroy = function() {
 		this.$parent.removeChild(this.$el);
@@ -203,9 +202,12 @@ const Item = (() => {
 
 	proto.click = function(e) {
 		const clickedDirection = e.target;
-
 		clickedDirection === this.$right.firstElementChild ? this.imgIndex++ : this.imgIndex--;
+		this.afterClick();
+	};
 
+	proto.afterClick = function() {
+		//$left/$right 화살표 숨김/표시
 		if (this.imgIndex === 0) {
 			this.$left.style.display = 'none';
 		} else if (this.imgIndex === 4) {
@@ -215,16 +217,23 @@ const Item = (() => {
 			this.$right.style.display = '';
 		}
 
-		this.$slider.style.transform = `translateX(${this.imgIndex * -innerWidth}px)`;
+		//사진 옆으로 이동시키기
+		this.$slider.style.transform = `translateX(${this.imgIndex * innerWidth * -1}px)`;
 
+		//전에 forEach보다 전체 다 지우고 새로 그리는게 더 빠르다고 하셨던게 기억나서 써봤는데, 뭐가 나을까요?
+		// this.$pagebar.innerHTML = '';
+		// for (let i = 0; i < this._dataList.length; i++) {
+		// 	this.$pagebar.insertAdjacentHTML(
+		// 		'beforeend',
+		// 		`
+		// 		<div class="Yi5aA"></div>
+		// 	`
+		// 	);
+		// }
 		this.$pagebar.querySelectorAll('div').forEach(x => x.classList.remove('XCodT'));
 		this.$pagebar.children[this.imgIndex].classList.add('XCodT');
-
-		// TODO $left/$right 화살표 숨김/표시 (필요한 로직 추가)
-		// TODO this.$slider.style.transform = `translateX(${이동좌표}px)`;
-		// TODO $pagebar 이미지에 대응되는 엘리먼트로 XCodT 클래스 이동 (on 처리)
-		// TODO 가로사이즈는 innerWidth로 직접 잡거나, innerWidth를 캐싱해두고 사용
 	};
+
 	proto.resize = function() {
 		// HACK 현재 데이터바인딩을 지원하지 않으므로, 리스트 모든 엘리먼트 지우고 새로 렌더링
 		while (this.$sliderList.firstChild) {
@@ -236,8 +245,28 @@ const Item = (() => {
             ${this.htmlSliderImgs(this._dataList)}
         `
 		);
-		// TODO 리프레시 전 슬라이드 이미지 다시 노출 (좌표보정)
-		// TODO 가로사이즈는 innerWidth로 직접 잡거나, innerWidth를 캐싱해두고 사용
+		this.afterClick();
+		// 이렇게 직접 비율계산해서 이미지 크기 정하는 코드 썼는데, 소용없음 그냥 resize 자체 부르면 됨
+		// this.width = this.myImg.width;
+		// this.height = this.myImg.height;
+
+		// this.maxWidth = this.myImg.naturalWidth;
+		// this.maxHeight = this.myImg.naturalHeight;
+
+		// if (this.width > this.maxWidth || this.height > this.maxHeight) {
+		// 	if (this.width > this.height) {
+		// 		this.resizeWidth = this.maxWidth;
+		// 		this.resizeHeight = Math.round((this.height * this.resizeWidth) / this.width);
+		// 	} else {
+		// 		this.resizeHeight = this.maxHeight;
+		// 		this.resizeWidth = Math.round((this.width * this.resizeHeight) / this.height);
+		// 	}
+		// } else {
+		// 	this.resizeWidth = this.width;
+		// 	this.resizeHeight = this.height;
+		// }
+		// this.myImg.width = this.resizeWidth;
+		// this.myImg.height = this.resizeHeight;
 	};
 
 	proto.addEvent = function() {
