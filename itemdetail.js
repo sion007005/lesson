@@ -102,7 +102,6 @@ const ItemDetail = (() => {
 		this._item;
 		this._detail;
 		this._pageTurner;
-
 		this._data = {};
 
 		this.$click;
@@ -180,11 +179,7 @@ const Item = (() => {
 		this.$sliderList = this.$slider.querySelector('ul');
 		this.$left = this.$el.querySelector('.js-left');
 		this.$right = this.$el.querySelector('.js-right');
-        this.$pagebar = this.$el.querySelector('.js-pagebar');
-        /* FIXME 다른 button이 추가될 경우 로직 전체를 뜯어내야 하는 UI에 종속적인 로직입니다
-        그리고 실제 버튼 UI는 자식 DIV이고, 실제 BUTTON 엘리먼트 영역은 이보다 넓습니다
-        'button'으로 룩업할 수 없는 상황이니, 그냥 this.$left, this.$right 사용하셔도 될 것 같아요 */
-		this.directionButtons = Array.from(this.$el.children[1].querySelectorAll('button'));
+		this.$pagebar = this.$el.querySelector('.js-pagebar');
 		this.imgIndex = 0;
 		this.resizeEvent;
 	};
@@ -195,53 +190,40 @@ const Item = (() => {
 		if (this.imgIndex === 0) {
 			this.$left.style.display = 'none';
 		}
-		this.resizeEvent = this.resize.bind(this);
-        /* BUG destroy 시에 this.$resize 이벤트리스너가 제거되지 않아 메모리 누수가 쌓이고 있습니다
-        root.destroy() 후 리사이즈 이벤트 발생시켜 보시면, 전부 살아있는 것 확인하실 수 있습니다
-        컴포넌트에서 추가되는 모든 추가로직은 대응되는 제거로직을 작성 해주시고,
-        destroy에서는 추가된 모든 것들을 제거하는 로직을 붙여주세요 */
-		window.addEventListener('resize', this.resizeEvent);
 	};
 	proto.destroy = function() {
 		this.$parent.removeChild(this.$el);
+		this.removeEvent();
 	};
 
 	proto.click = function(e) {
-        /* BUG 우선 특별한 경우 아니면 e.target이 아니라 e.currentTarget을 우선적으로 고려 해주세요
-        현재는 더 넓은 영역의 부모 BUTTON 아래에 자식 DIV가 있기 때문에, target 사용시 버그 발생합니다
-        기존코드 수정은 안 할테니, 오른쪽(>) 버튼 밖의 살짝 아래를 클릭해보세요 */
-        const clickedDirection = e.target;
-        /* FIXME 이렇게 쓰려면 e.currentTarget으로 잡고, this.$right 인지를 체크해야 할 것 같습니다  */
-		clickedDirection === this.$right.firstElementChild ? this.imgIndex++ : this.imgIndex--;
-		this.afterClick();
+		this.renderDirectionButtons(e.currentTarget);
+		this.moveImg();
+		this.renderPagebar();
 	};
 
-    /* TODO click 리스너가 부르는 주요로직의 메소드명이 afterClick이면 너무 모호한 것 같습니다
-    몸체를 보지 않고도 로직을 파악할 수 있도록 적절한 이름을 지어주세요 (필요시 메소드도 분리 해주세요) */
-	proto.afterClick = function() {
+	proto.renderDirectionButtons = function(clickedButton) {
+		clickedButton === this.$right ? this.imgIndex++ : this.imgIndex--;
+
 		//$left/$right 화살표 숨김/표시
 		if (this.imgIndex === 0) {
-            this.$left.style.display = 'none';
-        /* BUG 이미지 개수가 5개라는 건 절대 보장되지 않습니다
-        0번 인덱스나 1번 카운트 이외의 번호는 절대로 하드코딩 하지 마세요 */
-		} else if (this.imgIndex === 4) {
+			this.$left.style.display = 'none';
+		} else if (this.imgIndex === this._dataList.length - 1) {
 			this.$right.style.display = 'none';
-		} else if (this.imgIndex >= 1) {
+		} else {
 			this.$left.style.display = '';
 			this.$right.style.display = '';
 		}
+	};
 
+	proto.moveImg = function() {
 		//사진 옆으로 이동시키기
 		this.$slider.style.transform = `translateX(${this.imgIndex * innerWidth * -1}px)`;
+	};
 
-        //전에 forEach보다 전체 다 지우고 새로 그리는게 더 빠르다고 하셨던게 기억나서 써봤는데, 뭐가 나을까요?
-        /* COMMENT forEach 보다 전체를 리렌더링 하는 게 빠르다고 말씀드린 적은 없습니다
-        리플로우 유발 연산을 반복하느니 지우고 새로 그리는 게 차라리 빠르다고 말씀드린 것이고
-        아래 페이지바 ON/OFF 로직과는 전혀 무관한 내용입니다 (얘는 단순 색상 리페인트 입니다) */
-        /* TODO querySelectorAll('div')을 굳이 새로 룩업할 필요가 없어 보입니다
-        아래라인과 동일하게 children를 사용하면 될 것 같습니다
-        [].slice.call(원본), Array.from(원본), [...원본] 등으로 감싸서 사용 해주세요 */
-		this.$pagebar.querySelectorAll('div').forEach(x => x.classList.remove('XCodT'));
+	proto.renderPagebar = function() {
+		//페이지바 조정
+		Array.from(this.$pagebar.children).forEach(x => x.classList.remove('XCodT'));
 		this.$pagebar.children[this.imgIndex].classList.add('XCodT');
 	};
 
@@ -255,19 +237,22 @@ const Item = (() => {
             ${this.htmlSliderImgs(this._dataList)}
         `
 		);
-		this.afterClick();
+		this.moveImg();
 	};
 
 	proto.addEvent = function() {
-        this.$click = this.click.bind(this);
-        /* FIXME 아래 이벤트는 어차피 컴포넌트에서 생성한 DOM 엘리먼트에 직접 걸리는 이벤트이고
-        destroy와 함께 DOM트리에서 제거하므로, 눈에 보이는 문제는 없어 보입니다
-        하지만 실제로 리스너가 제거되지 않기 때문에, SPA 환경에서 메모리누수가 쌓일 수 있습니다
-        이벤트리스너는 가능하면 안전하게 명시적으로 해제하는 편이 좋습니다
-        관련해서 이 글 읽어보시면 도움될 것 같습니다
-        https://ui.toast.com/weekly-pick/ko_20160826/
-        https://v8.dev/blog/tracing-js-dom */
-		this.directionButtons.forEach(x => x.addEventListener('click', this.$click));
+		this.$click = this.click.bind(this);
+		this.resizeEvent = this.resize.bind(this);
+
+		this.$left.addEventListener('click', this.$click);
+		this.$right.addEventListener('click', this.$click);
+		window.addEventListener('resize', this.resizeEvent);
+	};
+
+	proto.removeEvent = function() {
+		this.$left.removeEventListener('click', this.$click);
+		this.$right.removeEventListener('click', this.$click);
+		window.removeEventListener('resize', this.resizeEvent);
 	};
 
 	proto.htmlSliderImgs = function(imgDataList) {
