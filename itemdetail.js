@@ -173,6 +173,8 @@ const Item = (() => {
 	const Item = function($parent, detailData = {}, imgDataList = [], profileData = {}) {
 		this.$parent = $parent;
 		this._dataList = imgDataList;
+        this.duration = '0.25s';
+        this.imgIndex = 0;
 		this.render(detailData, profileData);
 		this.$el = this.$parent.firstElementChild;
 		this.$slider = this.$el.querySelector('.js-slider');
@@ -180,16 +182,13 @@ const Item = (() => {
 		this.$left = this.$el.querySelector('.js-left');
 		this.$right = this.$el.querySelector('.js-right');
 		this.$pagebar = this.$el.querySelector('.js-pagebar');
-		this.imgIndex = 0;
-		this.resizeEvent;
 	};
 	const proto = Item.prototype;
 
 	proto.create = function() {
-		this.addEvent();
-		if (this.imgIndex === 0) {
-			this.$left.style.display = 'none';
-		}
+        this.displayDirectionButtons();
+        this.displayPageDot();
+        this.addEvent();
 	};
 	proto.destroy = function() {
 		this.$parent.removeChild(this.$el);
@@ -197,34 +196,39 @@ const Item = (() => {
 	};
 
 	proto.click = function(e) {
-		this.renderDirectionButtons(e.currentTarget);
+        if(e.currentTarget === this.$right) {
+            this.imgIndex++;
+        }
+        if(e.currentTarget === this.$left) {
+            this.imgIndex--;
+        }
 		this.moveImg();
-		this.renderPagebar();
+		this.displayPageDot();
+		this.displayDirectionButtons();
 	};
 
-	proto.renderDirectionButtons = function(clickedButton) {
-		clickedButton === this.$right ? this.imgIndex++ : this.imgIndex--;
-
-		//$left/$right 화살표 숨김/표시
+	proto.displayDirectionButtons = function() {
+        this.$left.style.display = '';
+        this.$right.style.display = '';
 		if (this.imgIndex === 0) {
 			this.$left.style.display = 'none';
-		} else if (this.imgIndex === this._dataList.length - 1) {
+        }
+        if (this.imgIndex === this._dataList.length - 1) {
 			this.$right.style.display = 'none';
-		} else {
-			this.$left.style.display = '';
-			this.$right.style.display = '';
 		}
 	};
 
 	proto.moveImg = function() {
-		//사진 옆으로 이동시키기
-		this.$slider.style.transform = `translateX(${this.imgIndex * innerWidth * -1}px)`;
+        const translateX = this.imgIndex * innerWidth * -1;
+		this.$slider.style.transform = `translateX(${translateX}px)`;
 	};
 
-	proto.renderPagebar = function() {
-		//페이지바 조정
-		Array.from(this.$pagebar.children).forEach(x => x.classList.remove('XCodT'));
-		this.$pagebar.children[this.imgIndex].classList.add('XCodT');
+	proto.displayPageDot = function() {
+        const onClass = 'XCodT';
+        const prev = this.$pagebar.querySelector('.' + onClass);
+        const next = this.$pagebar.children[this.imgIndex];
+        prev && prev.classList.remove(onClass);
+		next && next.classList.add(onClass);
 	};
 
 	proto.resize = function() {
@@ -237,22 +241,26 @@ const Item = (() => {
             ${this.htmlSliderImgs(this._dataList)}
         `
 		);
-		this.moveImg();
+        this.$slider.style.transitionDuration = '';
+        this.moveImg();
+        setTimeout(() => {
+            this.$slider.style.transitionDuration = this.duration;
+        });
 	};
 
 	proto.addEvent = function() {
 		this.$click = this.click.bind(this);
-		this.resizeEvent = this.resize.bind(this);
+		this.$resize = this.resize.bind(this);
 
 		this.$left.addEventListener('click', this.$click);
 		this.$right.addEventListener('click', this.$click);
-		window.addEventListener('resize', this.resizeEvent);
+		window.addEventListener('resize', this.$resize);
 	};
 
 	proto.removeEvent = function() {
 		this.$left.removeEventListener('click', this.$click);
 		this.$right.removeEventListener('click', this.$click);
-		window.removeEventListener('resize', this.resizeEvent);
+		window.removeEventListener('resize', this.$resize);
 	};
 
 	proto.htmlSliderImgs = function(imgDataList) {
@@ -278,10 +286,9 @@ const Item = (() => {
 		return imgs;
 	};
 	proto.render = function(data, profileData) {
-		const navs = this._dataList.reduce((html, img, index) => {
-			const on = index === 0 ? 'XCodT' : '';
+		const navs = this._dataList.reduce(html => {
 			html += `
-                <div class="Yi5aA ${on}"></div>
+                <div class="Yi5aA"></div>
             `;
 			return html;
 		}, '');
@@ -307,7 +314,7 @@ const Item = (() => {
                             <div class="Igw0E IwRSH eGOV_ _4EzTm O1flK D8xaz fm1AK TxciK yiMZG">
                                 <div class="tN4sQ zRsZI">
                                     <div class="NgKI_">
-                                        <div class="js-slider MreMs" tabindex="0" style="transition-duration: 0.25s; transform: translateX(0px);">
+                                        <div class="js-slider MreMs" tabindex="0" style="transition-duration: ${this.duration}; transform: translateX(0px);">
                                             <div class="qqm6D">
                                                 <ul class="YlNGR" style="padding-left: 0px; padding-right: 0px;">
                                                     ${this.htmlSliderImgs(this._dataList)}
